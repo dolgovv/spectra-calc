@@ -9,7 +9,7 @@ export const SPATIAL_EXTENT_MICRONS = 900;
  * Sr (relative std deviation) → uniformity category thresholds.
  * The spec lists: <0.15 excellent, <0.20 acceptable, <0.30 satisfactory, ≥0.33 unacceptable.
  * That leaves a [0.30, 0.33) gap; we close it at 0.30 so categorization is continuous.
- * Kept here as a single source of truth — adjust in one place if the rubric changes.
+ * Kept here as a single source of truth - adjust in one place if the rubric changes.
  */
 export const SR_THRESHOLDS = {
   excellent: 0.15,
@@ -18,8 +18,8 @@ export const SR_THRESHOLDS = {
 } as const;
 
 export const CATEGORY_LABELS_RU: Record<string, string> = {
-  excellent: 'отлично',
-  acceptable: 'приемлемо',
-  satisfactory: 'удовлетворительно',
-  unacceptable: 'неприемлемо',
+  excellent: "отлично",
+  acceptable: "приемлемо",
+  satisfactory: "удовлетворительно",
+  unacceptable: "неприемлемо",
 };

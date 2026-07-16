@@ -1,0 +1,8 @@
+# Билд-контекст на сервере - это APP_DIR, где рядом лежат volume-папки и .env.
+# Без этого docker build отправляет демону всё содержимое storage/ на каждой сборке.
+storage
+logs
+node_modules
+.env
+src
+*.tsbuildinfo

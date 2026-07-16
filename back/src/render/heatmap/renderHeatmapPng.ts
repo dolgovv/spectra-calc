@@ -1,8 +1,8 @@
-import { createCanvas, type SKRSContext2D } from '@napi-rs/canvas';
-import { bilinearSample } from './interpolate';
-import { createNavyWhiteScale, sampleStops } from './colorScale';
-import { ensureCanvasFonts, CANVAS_FONT_FAMILY } from '../fonts';
-import type { SpectrumComputation } from '../../common/types/spectra.types';
+import { createCanvas, type SKRSContext2D } from "@napi-rs/canvas";
+import { bilinearSample } from "./interpolate";
+import { createNavyWhiteScale, sampleStops } from "./colorScale";
+import { ensureCanvasFonts, CANVAS_FONT_FAMILY } from "../fonts";
+import type { SpectrumComputation } from "../../common/types/spectra.types";
 
 export interface HeatmapRenderOptions {
   /** Overall pixel scale multiplier for a crisp export (default 2). */
@@ -22,7 +22,7 @@ const BASE = {
 /**
  * Renders the 10×10 intensity matrix as a smooth (bilinear-interpolated) heatmap PNG on a
  * white scientific background, with X/Y axes in µm, a vertical navy→white colorbar and an
- * "I <peak> см⁻¹" title — matching the reference Origin/matplotlib output.
+ * "I <peak> см⁻¹" title - matching the reference Origin/matplotlib output.
  */
 export function renderHeatmapPng(
   computation: SpectrumComputation,
@@ -30,7 +30,8 @@ export function renderHeatmapPng(
 ): Buffer {
   ensureCanvasFonts();
   const scale = options.scale ?? 2;
-  const { matrix, xTicks, yTicks, colorScaleMin, colorScaleMax, peakLabel } = computation;
+  const { matrix, xTicks, yTicks, colorScaleMin, colorScaleMax, peakLabel } =
+    computation;
 
   const totalWidth =
     BASE.marginLeft +
@@ -41,22 +42,38 @@ export function renderHeatmapPng(
   const totalHeight = BASE.marginTop + BASE.plot + BASE.marginBottom;
 
   const canvas = createCanvas(totalWidth * scale, totalHeight * scale);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx.scale(scale, scale);
 
   // White background
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, totalWidth, totalHeight);
 
   const plotLeft = BASE.marginLeft;
   const plotTop = BASE.marginTop;
   const plotSize = BASE.plot;
 
-  drawHeatmapField(ctx, matrix, colorScaleMin, colorScaleMax, plotLeft, plotTop, plotSize);
+  drawHeatmapField(
+    ctx,
+    matrix,
+    colorScaleMin,
+    colorScaleMax,
+    plotLeft,
+    plotTop,
+    plotSize,
+  );
   drawAxes(ctx, xTicks, yTicks, plotLeft, plotTop, plotSize);
-  drawColorbar(ctx, colorScaleMin, colorScaleMax, peakLabel, plotLeft, plotTop, plotSize);
+  drawColorbar(
+    ctx,
+    colorScaleMin,
+    colorScaleMax,
+    peakLabel,
+    plotLeft,
+    plotTop,
+    plotSize,
+  );
 
-  return canvas.toBuffer('image/png');
+  return canvas.toBuffer("image/png");
 }
 
 function drawHeatmapField(
@@ -71,7 +88,7 @@ function drawHeatmapField(
   const getColor = createNavyWhiteScale(min, max);
   const res = 160; // offscreen resolution, upscaled smoothly into the plot rect
   const buffer = createCanvas(res, res);
-  const bctx = buffer.getContext('2d');
+  const bctx = buffer.getContext("2d");
   const image = bctx.createImageData(res, res);
 
   for (let py = 0; py < res; py++) {
@@ -92,7 +109,7 @@ function drawHeatmapField(
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(buffer, left, top, size, size);
 
-  ctx.strokeStyle = '#000000';
+  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1.2;
   ctx.strokeRect(left, top, size, size);
 }
@@ -106,14 +123,14 @@ function drawAxes(
   size: number,
 ): void {
   const n = xTicks.length;
-  ctx.strokeStyle = '#000000';
-  ctx.fillStyle = '#000000';
+  ctx.strokeStyle = "#000000";
+  ctx.fillStyle = "#000000";
   ctx.lineWidth = 1.2;
   ctx.font = `13px "${CANVAS_FONT_FAMILY}"`;
 
   // X ticks + labels
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
   xTicks.forEach((tick, i) => {
     const x = left + (i / (n - 1)) * size;
     ctx.beginPath();
@@ -124,8 +141,8 @@ function drawAxes(
   });
 
   // Y ticks + labels (0 at bottom)
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
   yTicks.forEach((tick, i) => {
     const y = top + size - (i / (n - 1)) * size;
     ctx.beginPath();
@@ -137,15 +154,15 @@ function drawAxes(
 
   // Axis titles
   ctx.font = `bold 15px "${CANVAS_FONT_FAMILY}"`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText('X, мкм', left + size / 2, top + size + 52);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("X, мкм", left + size / 2, top + size + 52);
 
   ctx.save();
   ctx.translate(left - 52, top + size / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.textAlign = 'center';
-  ctx.fillText('Y, мкм', 0, 0);
+  ctx.textAlign = "center";
+  ctx.fillText("Y, мкм", 0, 0);
   ctx.restore();
 }
 
@@ -172,16 +189,16 @@ function drawColorbar(
     const y = barTop + (i / steps) * barHeight;
     ctx.fillRect(barLeft, y, barWidth, barHeight / steps + 1);
   }
-  ctx.strokeStyle = '#000000';
+  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1.2;
   ctx.strokeRect(barLeft, barTop, barWidth, barHeight);
 
   // Tick labels
   const tickCount = 6;
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = "#000000";
   ctx.font = `12px "${CANVAS_FONT_FAMILY}"`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
   for (let i = 0; i <= tickCount; i++) {
     const frac = i / tickCount;
     const value = max - frac * (max - min);
@@ -195,14 +212,14 @@ function drawColorbar(
 
   // Title "I <peak> см⁻¹" (italic I; superscript −1 drawn manually since the
   // bundled font lacks the Unicode superscript-minus glyph).
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
   const titleY = barTop - 16;
   let cursor = barLeft - 2;
 
   ctx.font = `italic bold 15px "${CANVAS_FONT_FAMILY}"`;
-  ctx.fillText('I', cursor, titleY);
-  cursor += ctx.measureText('I').width + 3;
+  ctx.fillText("I", cursor, titleY);
+  cursor += ctx.measureText("I").width + 3;
 
   ctx.font = `13px "${CANVAS_FONT_FAMILY}"`;
   const mainText = `${peakLabel} см`;
@@ -210,9 +227,9 @@ function drawColorbar(
   cursor += ctx.measureText(mainText).width + 1;
 
   ctx.font = `10px "${CANVAS_FONT_FAMILY}"`;
-  ctx.fillText('-1', cursor, titleY - 6);
+  ctx.fillText("-1", cursor, titleY - 6);
 }
 
 function formatTick(value: number): string {
-  return new Intl.NumberFormat('ru-RU').format(Math.round(value));
+  return new Intl.NumberFormat("ru-RU").format(Math.round(value));
 }

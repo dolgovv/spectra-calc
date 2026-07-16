@@ -1,7 +1,7 @@
 {
   "name": "spectracalc-backend",
   "version": "0.1.0",
-  "description": "SpectraCalc backend — Raman spectra map processing (NestJS)",
+  "description": "SpectraCalc backend - Raman spectra map processing (NestJS)",
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

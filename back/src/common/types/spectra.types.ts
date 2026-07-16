@@ -3,7 +3,11 @@ export interface SpectrumInterval {
   to: number;
 }
 
-export type CategoryKey = 'excellent' | 'acceptable' | 'satisfactory' | 'unacceptable';
+export type CategoryKey =
+  | "excellent"
+  | "acceptable"
+  | "satisfactory"
+  | "unacceptable";
 
 /** A single parsed spectrum: parallel arrays of wavenumber (cm⁻¹) and intensity (a.u.). */
 export interface Spectrum {
@@ -13,9 +17,9 @@ export interface Spectrum {
 }
 
 export interface SpectrumStats {
-  /** μ — mean useful intensity over the 100 points. */
+  /** μ - mean useful intensity over the 100 points. */
   meanIntensity: number;
-  /** σ — population standard deviation. */
+  /** σ - population standard deviation. */
   stdDeviation: number;
   /** Sr = σ/μ (fraction). */
   sr: number;

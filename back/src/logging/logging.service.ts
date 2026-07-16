@@ -1,8 +1,8 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { appendFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import type { AppConfig } from '../config/configuration';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { appendFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
+import type { AppConfig } from "../config/configuration";
 
 /** Fields shared by every request log line. `date` is the leading ISO timestamp of the line. */
 export interface RequestLogEntry {
@@ -22,8 +22,8 @@ export interface ErrorLogEntry extends RequestLogEntry {
 
 /**
  * Appends one line per request to plain-text logs under LOGS_ROOT:
- *   - success.log — every successfully processed request
- *   - errors.log  — every failed request (adds error_description)
+ *   - success.log - every successfully processed request
+ *   - errors.log  - every failed request (adds error_description)
  * Logging is best-effort: an I/O failure here is caught and reported to the Nest logger, never
  * propagated to the request flow.
  */
@@ -35,14 +35,16 @@ export class LoggingService implements OnModuleInit {
   private readonly errorsLogPath: string;
 
   constructor(config: ConfigService<AppConfig, true>) {
-    this.logsRoot = config.get('logsRoot', { infer: true });
-    this.successLogPath = join(this.logsRoot, 'success.log');
-    this.errorsLogPath = join(this.logsRoot, 'errors.log');
+    this.logsRoot = config.get("logsRoot", { infer: true });
+    this.successLogPath = join(this.logsRoot, "success.log");
+    this.errorsLogPath = join(this.logsRoot, "errors.log");
   }
 
   async onModuleInit(): Promise<void> {
     await mkdir(this.logsRoot, { recursive: true }).catch((err) =>
-      this.logger.error(`Не удалось создать каталог логов: ${(err as Error).message}`),
+      this.logger.error(
+        `Не удалось создать каталог логов: ${(err as Error).message}`,
+      ),
     );
   }
 
@@ -61,21 +63,23 @@ export class LoggingService implements OnModuleInit {
       `chat_id=${entry.chatId} | ` +
       `file_name=${quote(entry.fileName)} | ` +
       `file_size=${entry.fileSize} | ` +
-      `interval=${entry.interval ?? '-'} | ` +
+      `interval=${entry.interval ?? "-"} | ` +
       `calc_time=${entry.calcTime}s`
     );
   }
 
   private async append(path: string, line: string): Promise<void> {
     try {
-      await appendFile(path, `${line}\n`, 'utf-8');
+      await appendFile(path, `${line}\n`, "utf-8");
     } catch (err) {
-      this.logger.error(`Не удалось записать лог (${path}): ${(err as Error).message}`);
+      this.logger.error(
+        `Не удалось записать лог (${path}): ${(err as Error).message}`,
+      );
     }
   }
 }
 
 /** Wraps a value in double quotes and escapes embedded quotes/newlines so each entry stays one line. */
 function quote(value: string): string {
-  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n/g, ' ')}"`;
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, " ")}"`;
 }

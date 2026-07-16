@@ -39,7 +39,7 @@ export interface SpectrumResult {
   id: string;
   interval: SpectrumInterval;
   gridSize: number;
-  /** matrix[row][col] — row is the Y index (0 = bottom), col is the X index (0 = left). */
+  /** matrix[row][col] - row is the Y index (0 = bottom), col is the X index (0 = left). */
   matrix: number[][];
   xTicks: number[];
   yTicks: number[];
