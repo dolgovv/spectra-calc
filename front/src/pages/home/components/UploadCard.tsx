@@ -3,6 +3,7 @@ import Dropzone from "./Dropzone";
 import IntervalSlider from "./IntervalSlider";
 import IntervalNumberInputs from "./IntervalNumberInputs";
 import StartButton from "./StartButton";
+import ExampleResultButton from "./ExampleResultButton";
 import type { SpectrumInterval } from "../../../types/spectra";
 import {
   DEFAULT_INTERVAL_MAX,
@@ -61,6 +62,9 @@ export default function UploadCard({
           loading={isSubmitting}
           onClick={onSubmit}
         />
+      </div>
+      <div className="mt-3">
+        <ExampleResultButton />
       </div>
     </Card>
   );
