@@ -35,24 +35,34 @@ export default function Dropzone({ file, error, onFileSelected }: DropzoneProps)
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
       className={cn(
-        'flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-surface-2 px-6 py-16 text-center transition-colors',
-        isDragOver && 'border-accent bg-accent/5',
-        error && 'border-red-500/50',
+        'rounded-lg border-[1.5px] border-dashed border-muted-faint bg-surface-2 px-6 py-[52px]',
+        'text-center transition-colors hover:border-accent',
+        isDragOver && 'border-accent',
+        error && 'border-red-500/60',
       )}
     >
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface">
-        <Archive className="h-7 w-7 text-accent" />
+      <div className="mx-auto mb-[18px] flex h-[52px] w-[52px] items-center justify-center rounded-lg border border-border bg-surface">
+        <Archive className="h-[22px] w-[22px] text-foreground" strokeWidth={1.6} />
       </div>
-      {file ? (
-        <p className="font-medium text-foreground">{file.name}</p>
-      ) : (
-        <p className="font-medium text-foreground">Перетащите архив с данными спектров</p>
-      )}
-      <p className="mt-1 text-sm text-muted">Формат .zip содержащий файлы спектров .txt</p>
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-      <Button variant="ghost" size="md" className="mt-6" onClick={() => inputRef.current?.click()}>
+
+      <p className="mb-1 text-[15px] font-semibold text-foreground">
+        Перетащите архив с данными спектров
+      </p>
+      <p className="mb-5 font-mono text-[13px] text-muted-faint">
+        Формат .zip содержащий файлы спектров .txt
+      </p>
+
+      <Button variant="ink" onClick={() => inputRef.current?.click()}>
         Выбрать файл
       </Button>
+
+      {file && !error && (
+        <div className="mt-3.5 inline-block max-w-full break-all rounded-full border border-accent bg-accent-dim px-3 py-1.5 font-mono text-[12.5px] text-foreground">
+          ✓ {file.name}
+        </div>
+      )}
+      {error && <p className="mt-3.5 font-mono text-[12.5px] text-red-400">{error}</p>}
+
       <input ref={inputRef} type="file" accept=".zip" hidden onChange={handleInputChange} />
     </div>
   );

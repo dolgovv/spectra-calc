@@ -10,12 +10,11 @@ export interface StartButtonProps {
 export default function StartButton({ disabled, loading, onClick }: StartButtonProps) {
   return (
     <Button
-      variant="primary"
-      size="lg"
-      className="w-full"
+      variant="cta"
+      className="mt-[26px]"
       disabled={disabled}
       loading={loading}
-      leftIcon={<Play className="h-4 w-4 fill-current" />}
+      leftIcon={<Play className="h-[15px] w-[15px] fill-current" />}
       onClick={onClick}
     >
       {loading ? 'Расчёт...' : 'Начать расчёт'}

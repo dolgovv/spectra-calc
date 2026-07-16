@@ -1,24 +1,72 @@
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+@import '@fontsource/ibm-plex-mono/700.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   @apply bg-background text-foreground font-sans antialiased;
 }
 
-/* Dual-range slider thumb click-through fix: track ignores pointer events,
-   only the thumb re-enables them, so clicks fall through to the nearer thumb. */
-.range-thumb {
+/* Film grain over the whole page. Sits above content but ignores pointer events. */
+body::after {
+  content: '';
+  @apply pointer-events-none fixed inset-0 bg-noise;
+  z-index: 60;
+  background-size: 140px 140px;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+
+/* Ruler slider: two range inputs overlap across the full track, and the band/knobs are painted
+   as separate elements — so the native thumb is invisible. The track ignores pointer events and
+   only the thumbs re-enable them, otherwise the upper input would swallow every drag. */
+.ruler-input {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
   pointer-events: none;
 }
-.range-thumb::-webkit-slider-thumb {
+.ruler-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 36px;
+  background: transparent;
+  border: none;
   pointer-events: auto;
+  cursor: ew-resize;
 }
-.range-thumb::-moz-range-thumb {
+.ruler-input::-moz-range-thumb {
+  width: 18px;
+  height: 36px;
+  background: transparent;
+  border: none;
   pointer-events: auto;
+  cursor: ew-resize;
+}
+.ruler-input::-moz-range-track {
+  background: transparent;
+}
+
+/* Number inputs read as instrument readouts — drop the browser spinners. */
+.readout-input::-webkit-outer-spin-button,
+.readout-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.readout-input {
+  -moz-appearance: textfield;
 }

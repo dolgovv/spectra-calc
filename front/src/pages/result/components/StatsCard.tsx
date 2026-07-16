@@ -1,12 +1,9 @@
-import Card from '../../../common/components/Card';
-import Badge from '../../../common/components/Badge';
+import Panel from '../../../common/components/Panel';
+import PanelTitle from '../../../common/components/PanelTitle';
+import Pill from '../../../common/components/Pill';
 import StatRow from './StatRow';
 import { cn } from '../../../lib/cn';
-import type {
-  CategoryKey,
-  SpectrumInterval,
-  SpectrumStats,
-} from '../../../types/spectra';
+import type { CategoryKey, SpectrumInterval, SpectrumStats } from '../../../types/spectra';
 import { formatInteger, formatPercent } from '../../../lib/formatNumber';
 
 export interface StatsCardProps {
@@ -14,22 +11,29 @@ export interface StatsCardProps {
   stats: SpectrumStats;
 }
 
-const CATEGORY_CLASSES: Record<CategoryKey, string> = {
-  excellent: 'bg-accent/15 text-accent border-accent/30',
-  acceptable: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
-  satisfactory: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  unacceptable: 'bg-red-500/15 text-red-300 border-red-500/30',
+/** Rubber-stamp treatment per uniformity grade: colour plus a pass/fail glyph. */
+const CATEGORY: Record<CategoryKey, { classes: string; glyph: string }> = {
+  excellent: { classes: 'text-green border-green', glyph: '✓' },
+  acceptable: { classes: 'text-teal-300 border-teal-300', glyph: '✓' },
+  satisfactory: { classes: 'text-amber-400 border-amber-400', glyph: '✓' },
+  unacceptable: { classes: 'text-accent border-accent', glyph: '✕' },
 };
 
 export default function StatsCard({ interval, stats }: StatsCardProps) {
+  const category = CATEGORY[stats.category];
+
   return (
-    <Card className="p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Результаты расчёта</h2>
-        <Badge>
-          Интервал: {interval.from}-{interval.to} см⁻¹
-        </Badge>
-      </div>
+    <Panel className="p-[26px]">
+      <PanelTitle
+        right={
+          <Pill>
+            Интервал: {interval.from}-{interval.to} см⁻¹
+          </Pill>
+        }
+      >
+        Результаты расчёта
+      </PanelTitle>
+
       <StatRow
         label="Средняя интенсивность"
         value={formatInteger(stats.meanIntensity)}
@@ -45,17 +49,20 @@ export default function StatsCard({ interval, stats }: StatsCardProps) {
         value={formatPercent(stats.relStdDeviationPercent)}
         unit="%"
       />
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-sm text-muted">Равномерность покрытия</span>
+
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <span className="text-[13px] text-muted">Равномерность покрытия</span>
         <span
           className={cn(
-            'rounded-full border px-3 py-1 text-sm font-semibold capitalize',
-            CATEGORY_CLASSES[stats.category],
+            'relative shrink-0 rounded-mark border-2 px-3 py-1.5 font-mono text-[12.5px]',
+            'font-bold uppercase tracking-[.08em] [transform:rotate(-3deg)]',
+            category.classes,
           )}
         >
-          {stats.categoryLabel}
+          <span className="pointer-events-none absolute inset-[3px] rounded-sm border border-current opacity-50" />
+          {category.glyph} {stats.categoryLabel}
         </span>
       </div>
-    </Card>
+    </Panel>
   );
 }

@@ -1,5 +1,5 @@
-import { API_BASE } from '../../../config';
-import type { SpectrumInterval, SpectrumResult } from '../../../types/spectra';
+import { API_BASE } from "../../../config";
+import type { SpectrumInterval, SpectrumResult } from "../../../types/spectra";
 
 export interface ComputeSpectrumResultParams {
   file: File;
@@ -16,15 +16,18 @@ export async function computeSpectrumResult({
   interval,
 }: ComputeSpectrumResultParams): Promise<SpectrumResult> {
   const form = new FormData();
-  form.append('archive', file);
-  form.append('from', String(interval.from));
-  form.append('to', String(interval.to));
+  form.append("archive", file);
+  form.append("from", String(interval.from));
+  form.append("to", String(interval.to));
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}/api/calculate`, { method: 'POST', body: form });
+    response = await fetch(`${API_BASE}/api/calculate`, {
+      method: "POST",
+      body: form,
+    });
   } catch {
-    throw new Error('Не удалось связаться с сервером расчёта. Проверьте, что бэкенд запущен.');
+    throw new Error("Ошибка сервера.");
   }
 
   if (!response.ok) {
@@ -37,11 +40,11 @@ async function extractErrorMessage(response: Response): Promise<string> {
   try {
     const body = await response.json();
     const message = (body as { message?: string | string[] }).message;
-    if (Array.isArray(message)) return message.join('; ');
+    if (Array.isArray(message)) return message.join("; ");
     if (message) return message;
   } catch {
     // fall through to a status-based message
   }
-  if (response.status === 429) return 'Сервис перегружен, попробуйте позже.';
+  if (response.status === 429) return "Сервис перегружен, попробуйте позже.";
   return `Ошибка сервера (${response.status})`;
 }

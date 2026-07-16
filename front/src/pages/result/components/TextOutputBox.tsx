@@ -1,4 +1,3 @@
-import Card from '../../../common/components/Card';
 import { buildTextOutput } from '../actions/buildTextOutput';
 import type { SpectrumResult } from '../../../types/spectra';
 
@@ -6,15 +5,19 @@ export interface TextOutputBoxProps {
   result: SpectrumResult;
 }
 
+/** Terminal-style readout: phosphor-green labels with the measured values accented. */
 export default function TextOutputBox({ result }: TextOutputBoxProps) {
   return (
-    <Card className="bg-surface-2 p-4">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+    <div className="rounded-panel bg-console px-5 py-[18px] font-mono text-[12.5px] leading-[1.85] text-[#AEE7C9]">
+      <span className="mb-2.5 block text-[10.5px] uppercase tracking-[.1em] text-[#5C8A72]">
         Текстовый вывод
-      </p>
-      <pre className="whitespace-pre-wrap font-mono text-sm text-foreground">
-        {buildTextOutput(result)}
-      </pre>
-    </Card>
+      </span>
+      {buildTextOutput(result).map((line) => (
+        <div key={line.label}>
+          {line.label}: <span className={line.highlight ? 'text-accent' : undefined}>{line.value}</span>
+          {line.suffix && ` ${line.suffix}`}
+        </div>
+      ))}
+    </div>
   );
 }

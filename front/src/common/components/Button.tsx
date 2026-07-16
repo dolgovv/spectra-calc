@@ -3,37 +3,35 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  /**
+   * ink     — solid paper-white key button ("Выбрать файл")
+   * ghost   — outlined, for secondary navigation ("Пример результата →")
+   * primary — accent fill ("Скачать PDF-отчёт")
+   * cta     — full-width accent submit; greys out when disabled ("Начать расчёт")
+   */
+  variant?: 'ink' | 'ghost' | 'primary' | 'cta';
   leftIcon?: ReactNode;
   loading?: boolean;
 }
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary: 'bg-accent text-accent-foreground hover:brightness-110',
-  outline: 'border border-border-strong bg-transparent text-foreground hover:bg-surface-2',
-  ghost: 'bg-surface-2 text-foreground hover:bg-surface',
-};
-
-const sizeClasses: Record<NonNullable<ButtonProps['size']>, string> = {
-  sm: 'h-8 px-3 text-sm gap-1.5',
-  md: 'h-10 px-4 text-sm gap-2',
-  lg: 'h-14 px-6 text-base gap-2',
+  ink: 'font-mono text-[13px] font-medium px-5 py-2.5 rounded-md border border-foreground bg-foreground text-background hover:bg-white active:scale-[.98]',
+  ghost:
+    'font-mono text-[13px] font-medium px-5 py-2.5 rounded-md border border-border bg-transparent text-foreground hover:border-foreground active:scale-[.98]',
+  primary:
+    'font-display text-sm font-semibold px-5 py-[13px] rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover',
+  cta: 'w-full font-display text-[15px] font-semibold p-4 rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover disabled:bg-border disabled:text-muted-faint disabled:cursor-not-allowed disabled:hover:bg-border',
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    { variant = 'primary', size = 'md', leftIcon, loading, disabled, className, children, ...rest },
-    ref,
-  ) => {
+  ({ variant = 'ink', leftIcon, loading, disabled, className, children, ...rest }, ref) => {
     return (
       <button
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'inline-flex items-center justify-center rounded-xl font-medium transition disabled:cursor-not-allowed disabled:opacity-50',
+          'inline-flex items-center justify-center gap-2 transition',
           variantClasses[variant],
-          sizeClasses[size],
           className,
         )}
         {...rest}

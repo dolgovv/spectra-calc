@@ -1,14 +1,11 @@
-import Card from "../../../common/components/Card";
-import Dropzone from "./Dropzone";
-import IntervalSlider from "./IntervalSlider";
-import IntervalNumberInputs from "./IntervalNumberInputs";
-import StartButton from "./StartButton";
-import ExampleResultButton from "./ExampleResultButton";
-import type { SpectrumInterval } from "../../../types/spectra";
-import {
-  DEFAULT_INTERVAL_MAX,
-  DEFAULT_INTERVAL_MIN,
-} from "../../../types/spectra";
+import Panel from '../../../common/components/Panel';
+import PanelTitle, { PanelIndex } from '../../../common/components/PanelTitle';
+import Dropzone from './Dropzone';
+import IntervalRuler from './IntervalRuler';
+import IntervalNumberInputs from './IntervalNumberInputs';
+import StartButton from './StartButton';
+import type { SpectrumInterval } from '../../../types/spectra';
+import { DEFAULT_INTERVAL_MAX, DEFAULT_INTERVAL_MIN } from '../../../types/spectra';
 
 export interface UploadCardProps {
   file: File | null;
@@ -20,6 +17,7 @@ export interface UploadCardProps {
   onSubmit: () => void;
 }
 
+/** The two numbered steps of the form: 01 the archive, 02 the interval and submit. */
 export default function UploadCard({
   file,
   fileError,
@@ -30,42 +28,43 @@ export default function UploadCard({
   onSubmit,
 }: UploadCardProps) {
   return (
-    <Card className="mx-auto max-w-2xl p-6 mb-6">
-      <Dropzone file={file} error={fileError} onFileSelected={onFileSelected} />
+    <>
+      <Panel className="p-[30px]">
+        <PanelTitle right={<PanelIndex>01 / архив</PanelIndex>}>Данные</PanelTitle>
+        <Dropzone file={file} error={fileError} onFileSelected={onFileSelected} />
+      </Panel>
 
-      <div className="my-6 border-t border-border" />
+      <Panel className="mt-[18px] p-[30px]">
+        <PanelTitle right={<PanelIndex>02 / шкала</PanelIndex>}>Интервал спектра (см⁻¹)</PanelTitle>
 
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium">Интервал спектра (см⁻¹)</span>
-        <span className="text-sm font-medium text-accent">
-          {interval.from} &ndash; {interval.to}
-        </span>
-      </div>
-      <IntervalSlider
-        min={DEFAULT_INTERVAL_MIN}
-        max={DEFAULT_INTERVAL_MAX}
-        value={interval}
-        onChange={onIntervalChange}
-      />
-      <div className="mt-6">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[13px] text-muted">выбранный диапазон</span>
+          <span className="whitespace-nowrap font-mono text-xl font-semibold text-accent">
+            {interval.from} – {interval.to}
+            <span className="ml-1 text-xs font-normal text-muted-faint">см⁻¹</span>
+          </span>
+        </div>
+
+        <IntervalRuler
+          min={DEFAULT_INTERVAL_MIN}
+          max={DEFAULT_INTERVAL_MAX}
+          value={interval}
+          onChange={onIntervalChange}
+        />
+
         <IntervalNumberInputs
           min={DEFAULT_INTERVAL_MIN}
           max={DEFAULT_INTERVAL_MAX}
           value={interval}
           onChange={onIntervalChange}
         />
-      </div>
 
-      <div className="mt-8">
         <StartButton
           disabled={!file || !!fileError || isSubmitting}
           loading={isSubmitting}
           onClick={onSubmit}
         />
-      </div>
-      <div className="mt-3">
-        <ExampleResultButton />
-      </div>
-    </Card>
+      </Panel>
+    </>
   );
 }
