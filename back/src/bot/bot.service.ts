@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { Bot, Context, InputFile } from 'grammy';
 import { ProxyAgent } from 'undici';
 import { SpectraService } from '../spectra/spectra.service';
+import { LoggingService } from '../logging/logging.service';
 import {
   createGrammyProxyAgent,
   createUndiciProxyDispatcher,
@@ -34,6 +35,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService<AppConfig, true>,
     private readonly spectra: SpectraService,
+    private readonly requestLog: LoggingService,
   ) {}
 
   onModuleInit(): void {
@@ -96,6 +98,9 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    const chatId = ctx.chat?.id ?? ctx.from?.id ?? 'unknown';
+    const intervalLabel = `${interval.from}-${interval.to}`;
+
     await ctx.reply(`Считаю карту для интервала ${interval.from}–${interval.to} см⁻¹…`);
     try {
       const buffer = await this.downloadDocument(ctx, doc.file_id);
@@ -109,9 +114,28 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         caption: botCaption(result),
       });
       await ctx.replyWithDocument(new InputFile(artifacts.reportPdf, 'report.pdf'));
+
+      await this.requestLog.logSuccess({
+        chatId,
+        fileName: name,
+        fileSize: doc.file_size ?? buffer.length,
+        interval: intervalLabel,
+        date: result.computedAt,
+        calcTime: result.stats.calcTimeSeconds,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ошибка расчёта';
       await ctx.reply(`Не удалось обработать архив: ${message}`);
+
+      await this.requestLog.logError({
+        chatId,
+        fileName: name,
+        fileSize: doc.file_size ?? 0,
+        interval: intervalLabel,
+        date: new Date().toISOString(),
+        calcTime: 0,
+        errorDescription: message,
+      });
     }
   }
 

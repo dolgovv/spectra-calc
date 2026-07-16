@@ -5,6 +5,7 @@ export interface AppConfig {
   publicBaseUrl: string;
   corsOrigins: string[];
   storageRoot: string;
+  logsRoot: string;
   queueMax: number;
   botToken: string | null;
   botProxyUrl: string | null;
@@ -20,6 +21,7 @@ export function loadConfig(): AppConfig {
       .map((s) => s.trim())
       .filter(Boolean),
     storageRoot: resolve(process.cwd(), process.env.STORAGE_ROOT ?? './storage'),
+    logsRoot: resolve(process.cwd(), process.env.LOGS_ROOT ?? './logs'),
     queueMax: Number.parseInt(process.env.QUEUE_MAX ?? '25', 10),
     botToken: process.env.BOT_TOKEN?.trim() ? process.env.BOT_TOKEN.trim() : null,
     botProxyUrl: process.env.BOT_PROXY_URL?.trim() ? process.env.BOT_PROXY_URL.trim() : null,
