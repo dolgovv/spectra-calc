@@ -23,10 +23,10 @@ export default function HeroSection() {
 
       <div className="flex gap-6">
         <Link to={ROUTES.example} className="mt-[26px] inline-block">
-          <Button variant="ink">Пример результата →</Button>
+          <Button variant="ink">Пример результата</Button>
         </Link>
         <Link to={ROUTES.bot} className="mt-[26px] inline-block">
-          <Button variant="ghost">Наш телеграм-бот →</Button>
+          <Button variant="ghost">Наш телеграм-бот</Button>
         </Link>
       </div>
     </section>
