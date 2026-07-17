@@ -1,9 +1,12 @@
-/** Paper-white "S" tile with the accent dot punched out of its top-right corner. */
+// Imported, not a literal path: Vite resolves it at build time and emits a hashed URL, so a
+// missing file fails the build instead of 404-ing in production.
+import logoWhite from '../../assets/logo-white.svg';
+
+/** Brand mark. Decorative — the adjacent "SpectraCalc" wordmark carries the name. */
 export default function Logo() {
   return (
-    <div className="relative flex h-[34px] w-[34px] items-center justify-center rounded-mark bg-foreground font-display text-base font-bold text-background">
-      S
-      <span className="absolute -right-[3px] -top-[3px] h-1.5 w-1.5 rounded-full bg-accent" />
+    <div className="relative flex h-[34px] w-[34px] items-center justify-center rounded-mark font-display text-base font-bold text-background">
+      <img className="flex scale-150" src={logoWhite} alt="" />
     </div>
   );
 }

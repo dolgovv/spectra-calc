@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom';
-import Button from '../../../common/components/Button';
-import { ROUTES } from '../../../router/routes';
+import { Link } from "react-router-dom";
+import Button from "../../../common/components/Button";
+import { ROUTES } from "../../../router/routes";
 
 export default function HeroSection() {
   return (
-    <section className="max-w-[680px] pb-7 pt-16">
+    <section className="max-w-[680px] pb-7 pt-16 gap-6">
       <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface py-1.5 pl-2.5 pr-3 text-[11px] uppercase tracking-[.1em] text-muted">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
         Спектроскопия комбинационного рассеяния · онлайн-расчёт
@@ -17,13 +17,18 @@ export default function HeroSection() {
       </h1>
 
       <p className="max-w-[520px] text-[17px] leading-[1.55] text-muted">
-        Загрузите архив с данными, задайте интервал — и получите карту интенсивности и статистику за
-        секунды.
+        Загрузите архив с данными, задайте интервал — и получите карту
+        интенсивности и статистику за секунды.
       </p>
 
-      <Link to={ROUTES.example} className="mt-[26px] inline-block">
-        <Button variant="ghost">Пример результата →</Button>
-      </Link>
+      <div className="flex gap-6">
+        <Link to={ROUTES.example} className="mt-[26px] inline-block">
+          <Button variant="ink">Пример результата →</Button>
+        </Link>
+        <Link to={ROUTES.bot} className="mt-[26px] inline-block">
+          <Button variant="ghost">Наш телеграм-бот →</Button>
+        </Link>
+      </div>
     </section>
   );
 }

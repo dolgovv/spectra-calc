@@ -1,11 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { sampleHeatmapColor } from '../../../lib/heatmapPalette';
+import type { HeatmapScale } from '../../../lib/heatmapPalette';
 
 export interface HeatmapCanvasProps {
   /** matrix[row][col] — row 0 is the bottom of the map (Y=0), col 0 the left (X=0). */
   matrix: number[][];
-  colorScaleMin: number;
-  colorScaleMax: number;
+  scale: HeatmapScale;
 }
 
 const RESOLUTION = 600;
@@ -17,11 +16,7 @@ const RESOLUTION = 600;
  * up with image smoothing on — the browser's bilinear filter does the interpolation, which is what
  * gives the smooth field instead of 100 hard squares.
  */
-export default function HeatmapCanvas({
-  matrix,
-  colorScaleMin,
-  colorScaleMax,
-}: HeatmapCanvasProps) {
+export default function HeatmapCanvas({ matrix, scale }: HeatmapCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -32,8 +27,6 @@ export default function HeatmapCanvas({
     const rows = matrix.length;
     const cols = matrix[0]?.length ?? 0;
     if (!rows || !cols) return;
-
-    const span = colorScaleMax - colorScaleMin || 1;
 
     const cells = document.createElement('canvas');
     cells.width = cols;
@@ -46,7 +39,7 @@ export default function HeatmapCanvas({
       for (let col = 0; col < cols; col++) {
         // Matrix row 0 is the bottom of the map; canvas row 0 is the top.
         const y = rows - 1 - row;
-        const [r, g, b] = sampleHeatmapColor((matrix[row][col] - colorScaleMin) / span);
+        const [r, g, b] = scale.colorAt(matrix[row][col]);
         const offset = (y * cols + col) * 4;
         image.data[offset] = r;
         image.data[offset + 1] = g;
@@ -75,7 +68,7 @@ export default function HeatmapCanvas({
       ctx.lineTo(RESOLUTION, p);
       ctx.stroke();
     }
-  }, [matrix, colorScaleMin, colorScaleMax]);
+  }, [matrix, scale]);
 
   return (
     <canvas
