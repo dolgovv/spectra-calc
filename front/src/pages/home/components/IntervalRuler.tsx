@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import type { SpectrumInterval } from '../../../types/spectra';
+import { useMemo, useState } from "react";
+import type { SpectrumInterval } from "../../../types/spectra";
 
 export interface IntervalRulerProps {
   min: number;
@@ -36,7 +36,7 @@ export default function IntervalRuler({
   value,
   onChange,
 }: IntervalRulerProps) {
-  const [activeThumb, setActiveThumb] = useState<'from' | 'to'>('to');
+  const [activeThumb, setActiveThumb] = useState<"from" | "to">("to");
 
   const percent = (v: number) => ((v - min) / (max - min)) * 100;
   const fromPercent = percent(value.from);
@@ -54,7 +54,7 @@ export default function IntervalRuler({
     return out;
   }, [min, max]);
 
-  const inputClasses = 'ruler-input absolute inset-x-0 bottom-0 h-9 w-full';
+  const inputClasses = "ruler-input absolute inset-x-0 bottom-0 h-9 w-full";
 
   return (
     <div className="relative mb-2 mt-[26px] h-14">
@@ -71,16 +71,26 @@ export default function IntervalRuler({
             y1={tick.major ? 8 : 16}
             x2={tick.x}
             y2={30}
-            className={tick.major ? 'stroke-muted' : 'stroke-muted-faint'}
+            className={tick.major ? "stroke-muted" : "stroke-muted-faint"}
             strokeWidth={tick.major ? 1.2 : 1}
           />
         ))}
-        <line x1={0} y1={30} x2={VIEWBOX_WIDTH} y2={30} className="stroke-border" strokeWidth={1} />
+        <line
+          x1={0}
+          y1={30}
+          x2={VIEWBOX_WIDTH}
+          y2={30}
+          className="stroke-border"
+          strokeWidth={1}
+        />
       </svg>
 
       <div
         className="pointer-events-none absolute bottom-0 h-9 border-y-2 border-accent bg-accent-dim opacity-85"
-        style={{ left: `${fromPercent}%`, width: `${toPercent - fromPercent}%` }}
+        style={{
+          left: `${fromPercent}%`,
+          width: `${toPercent - fromPercent}%`,
+        }}
       />
       <Flag percent={fromPercent} />
       <Flag percent={toPercent} />
@@ -92,12 +102,15 @@ export default function IntervalRuler({
         max={max}
         step={step}
         value={value.from}
-        onPointerDown={() => setActiveThumb('from')}
+        onPointerDown={() => setActiveThumb("from")}
         onChange={(event) =>
-          onChange({ from: Math.min(Number(event.target.value), value.to - minGap), to: value.to })
+          onChange({
+            from: Math.min(Number(event.target.value), value.to - minGap),
+            to: value.to,
+          })
         }
         className={inputClasses}
-        style={{ zIndex: activeThumb === 'from' ? 4 : 3 }}
+        style={{ zIndex: activeThumb === "from" ? 4 : 3 }}
       />
       <input
         type="range"
@@ -106,7 +119,7 @@ export default function IntervalRuler({
         max={max}
         step={step}
         value={value.to}
-        onPointerDown={() => setActiveThumb('to')}
+        onPointerDown={() => setActiveThumb("to")}
         onChange={(event) =>
           onChange({
             from: value.from,
@@ -114,7 +127,7 @@ export default function IntervalRuler({
           })
         }
         className={inputClasses}
-        style={{ zIndex: activeThumb === 'to' ? 4 : 3 }}
+        style={{ zIndex: activeThumb === "to" ? 4 : 3 }}
       />
     </div>
   );
