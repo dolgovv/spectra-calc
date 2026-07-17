@@ -16,7 +16,7 @@ import {
 } from "./proxy";
 import type { AppConfig } from "../config/configuration";
 import type {
-  CalculationResult,
+  SpectrumComputation,
   SpectrumInterval,
 } from "../common/types/spectra.types";
 
@@ -116,7 +116,9 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     );
     try {
       const buffer = await this.downloadDocument(ctx, doc.file_id);
-      const { result, artifacts } = await this.spectra.calculateWithArtifacts({
+      // Nothing is persisted: the reply carries the buffers, so a stored copy would be
+      // disk we could never serve.
+      const { computation, artifacts } = await this.spectra.calculateInMemory({
         buffer,
         interval,
         sourceFileName: name,
@@ -125,7 +127,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       await ctx.replyWithPhoto(
         new InputFile(artifacts.heatmapPng, "heatmap.png"),
         {
-          caption: botCaption(result),
+          caption: botCaption(computation),
         },
       );
       await ctx.replyWithDocument(
@@ -137,8 +139,8 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         fileName: name,
         fileSize: doc.file_size ?? buffer.length,
         interval: intervalLabel,
-        date: result.computedAt,
-        calcTime: result.stats.calcTimeSeconds,
+        date: computation.computedAt,
+        calcTime: computation.stats.calcTimeSeconds,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Ошибка расчёта";
@@ -167,10 +169,11 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   }
 }
 
-function botCaption(result: CalculationResult): string {
-  const s = result.stats;
+/** Takes the computation rather than the persisted result — it only ever needed the numbers. */
+function botCaption(computation: SpectrumComputation): string {
+  const s = computation.stats;
   return (
-    `Интервал ${result.interval.from}–${result.interval.to} см⁻¹\n` +
+    `Интервал ${computation.interval.from}–${computation.interval.to} см⁻¹\n` +
     `μ = ${Math.round(s.meanIntensity)} · σ = ${Math.round(s.stdDeviation)}\n` +
     `Sr = ${s.relStdDeviationPercent.toFixed(1)} % - ${s.categoryLabel}`
   );

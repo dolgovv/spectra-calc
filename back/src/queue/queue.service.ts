@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { AppConfig } from '../config/configuration';
 
@@ -18,11 +18,15 @@ export class QueueFullException extends HttpException {
  */
 @Injectable()
 export class QueueService {
+  private readonly logger = new Logger(QueueService.name);
   private readonly max: number;
   private inFlight = 0;
 
   constructor(config: ConfigService<AppConfig, true>) {
     this.max = config.get('queueMax', { infer: true });
+    // Surfaces the effective cap so a QUEUE_MAX that failed to parse (and fell back) is visible
+    // in the logs instead of being a silent surprise under load.
+    this.logger.log(`Очередь: не более ${this.max} задач одновременно`);
   }
 
   get pending(): number {

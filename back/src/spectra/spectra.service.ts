@@ -6,12 +6,17 @@ import { StorageService } from '../storage/storage.service';
 import { QueueService } from '../queue/queue.service';
 import type {
   CalculationResult,
+  SpectrumComputation,
   SpectrumInterval,
 } from '../common/types/spectra.types';
 
-/** Result plus the in-memory artifacts (buffers), so the bot can reply without a self-fetch. */
-export interface CalculationOutput {
-  result: CalculationResult;
+/**
+ * A finished calculation that was never written to disk: no job id, no file links — by design.
+ * Callers that deliver the artifacts inline (the bot) get this, so a URL to a file that does not
+ * exist is not representable on that path.
+ */
+export interface InMemoryCalculation {
+  computation: SpectrumComputation;
   artifacts: RenderedArtifacts;
 }
 
@@ -37,25 +42,15 @@ export class SpectraService {
     private readonly queue: QueueService,
   ) {}
 
-  /** HTTP path: returns just the result JSON (with file URLs). */
-  async calculate(params: CalculateParams): Promise<CalculationResult> {
-    return (await this.calculateWithArtifacts(params)).result;
-  }
-
   /**
-   * End-to-end job: compute → render (PNG/PDF/CSV) → persist → assemble result JSON.
-   * Wrapped by the queue guard so the service rejects overload with HTTP 429. Also returns the
-   * in-memory artifacts so callers (the bot) can reply without re-fetching over HTTP.
+   * HTTP path: compute → render → persist → result JSON with file URLs, which the web client
+   * needs for its download links. The queue guard wraps persistence too, so the in-flight count
+   * only drops once the artifacts are actually on disk.
    */
-  async calculateWithArtifacts({
-    buffer,
-    interval,
-    sourceFileName,
-  }: CalculateParams): Promise<CalculationOutput> {
+  async calculate(params: CalculateParams): Promise<CalculationResult> {
     return this.queue.run(async () => {
+      const { computation, artifacts } = await this.computeAndRender(params);
       const id = randomUUID();
-      const computation = this.calc.compute(buffer, interval, sourceFileName);
-      const artifacts = await this.render.render(computation);
 
       const files = {
         heatmapPng: this.storage.publicUrl(id, FILE_NAMES.heatmapPng),
@@ -73,7 +68,28 @@ export class SpectraService {
         this.storage.save(id, FILE_NAMES.metaJson, JSON.stringify(result, null, 2)),
       ]);
 
-      return { result, artifacts };
+      return result;
     });
+  }
+
+  /**
+   * Bot path: same computation, but nothing is written to storage — the bot replies with the
+   * buffers themselves and never hands out a link, so persisting would only be disk we can
+   * never serve.
+   */
+  async calculateInMemory(params: CalculateParams): Promise<InMemoryCalculation> {
+    return this.queue.run(() => this.computeAndRender(params));
+  }
+
+  /** Compute + render only. Deliberately queue- and storage-agnostic: the guard lives at the
+   *  public boundary above, so this step can never be double-wrapped or persist by accident. */
+  private async computeAndRender({
+    buffer,
+    interval,
+    sourceFileName,
+  }: CalculateParams): Promise<InMemoryCalculation> {
+    const computation = this.calc.compute(buffer, interval, sourceFileName);
+    const artifacts = await this.render.render(computation);
+    return { computation, artifacts };
   }
 }
