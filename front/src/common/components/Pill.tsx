@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { cn } from '../../lib/cn';
+import type { ReactNode } from "react";
+import { cn } from "../../lib/cn";
 
 export interface PillProps {
   children: ReactNode;
@@ -12,8 +12,8 @@ export default function Pill({ children, icon, className }: PillProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border',
-        'bg-surface-2 px-2.5 py-[5px] font-mono text-[11.5px] text-muted',
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border",
+        "bg-surface-2 px-2.5 py-[5px] font-mono text-[11.5px] text-muted",
         className,
       )}
     >
