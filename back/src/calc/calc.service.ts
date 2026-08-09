@@ -3,7 +3,7 @@ import { extractSpectraFromZip } from './parsers/extractSpectraFromZip';
 import { usefulIntensity } from './math/usefulIntensity';
 import { buildMatrix } from './math/buildMatrix';
 import { computeStats } from './math/computeStats';
-import { MIN_GRID_SIZE, SPATIAL_EXTENT_MICRONS } from '../common/constants';
+import { MIN_GRID_SIZE, SPATIAL_STEP_MICRONS } from '../common/constants';
 import type {
   SpectrumComputation,
   SpectrumInterval,
@@ -84,8 +84,7 @@ export class CalcService {
   }
 
   private buildTicks(gridSize: number): number[] {
-    const step = SPATIAL_EXTENT_MICRONS / (gridSize - 1);
-    return Array.from({ length: gridSize }, (_, i) => Math.round(i * step));
+    return Array.from({ length: gridSize }, (_, i) => i * SPATIAL_STEP_MICRONS);
   }
 
   /** Nice-rounded color-scale bounds (down/up to nearest 5000), matching the frontend. */

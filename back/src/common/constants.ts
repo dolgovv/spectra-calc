@@ -5,8 +5,12 @@
  */
 export const MIN_GRID_SIZE = 4;
 
-/** Physical extent of the map in micrometres (0…900, step 100), per points.dat. */
-export const SPATIAL_EXTENT_MICRONS = 900;
+/**
+ * Fixed physical raster step in micrometres, per points.dat - the stage moves 100 µm between
+ * adjacent spectra regardless of how many were captured, so tick spacing stays this constant
+ * and the map's total extent scales with gridSize instead (e.g. 8×8 → 0…700, still step 100).
+ */
+export const SPATIAL_STEP_MICRONS = 100;
 
 /**
  * Sr (relative std deviation) → uniformity category thresholds.
