@@ -1,6 +1,5 @@
 import { createCanvas, type SKRSContext2D } from "@napi-rs/canvas";
-import { bilinearSample } from "./interpolate";
-import { createNavyWhiteScale, sampleStops } from "./colorScale";
+import { createHeatmapScale } from "./colorScale";
 import { ensureCanvasFonts, CANVAS_FONT_FAMILY } from "../fonts";
 import type { SpectrumComputation } from "../../common/types/spectra.types";
 
@@ -20,9 +19,11 @@ const BASE = {
 };
 
 /**
- * Renders the 10×10 intensity matrix as a smooth (bilinear-interpolated) heatmap PNG on a
- * white scientific background, with X/Y axes in µm, a vertical navy→white colorbar and an
- * "I <peak> см⁻¹" title - matching the reference Origin/matplotlib output.
+ * Renders the square intensity matrix as a smooth heatmap PNG on a white scientific background,
+ * with X/Y axes in µm, a vertical colorbar and an "I <peak> см⁻¹" title. Field, colours and
+ * colorbar are built the same way as the web preview (HeatmapCanvas.tsx/HeatmapCard.tsx) - native-
+ * resolution colour raster upscaled with smoothing, same magma ramp fitted to the same data - so
+ * this exported PNG (and the PDF report, which embeds it) look identical to the result page.
  */
 export function renderHeatmapPng(
   computation: SpectrumComputation,
@@ -32,6 +33,7 @@ export function renderHeatmapPng(
   const scale = options.scale ?? 2;
   const { matrix, xTicks, yTicks, colorScaleMin, colorScaleMax, peakLabel } =
     computation;
+  const getColor = createHeatmapScale(matrix.flat(), colorScaleMin, colorScaleMax);
 
   const totalWidth =
     BASE.marginLeft +
@@ -53,18 +55,11 @@ export function renderHeatmapPng(
   const plotTop = BASE.marginTop;
   const plotSize = BASE.plot;
 
-  drawHeatmapField(
-    ctx,
-    matrix,
-    colorScaleMin,
-    colorScaleMax,
-    plotLeft,
-    plotTop,
-    plotSize,
-  );
+  drawHeatmapField(ctx, matrix, getColor, plotLeft, plotTop, plotSize);
   drawAxes(ctx, xTicks, yTicks, plotLeft, plotTop, plotSize);
   drawColorbar(
     ctx,
+    getColor,
     colorScaleMin,
     colorScaleMax,
     peakLabel,
@@ -79,25 +74,26 @@ export function renderHeatmapPng(
 function drawHeatmapField(
   ctx: SKRSContext2D,
   matrix: number[][],
-  min: number,
-  max: number,
+  getColor: (value: number) => readonly [number, number, number],
   left: number,
   top: number,
   size: number,
 ): void {
-  const getColor = createNavyWhiteScale(min, max);
-  const res = 160; // offscreen resolution, upscaled smoothly into the plot rect
-  const buffer = createCanvas(res, res);
-  const bctx = buffer.getContext("2d");
-  const image = bctx.createImageData(res, res);
+  const rows = matrix.length;
+  const cols = matrix[0].length;
 
-  for (let py = 0; py < res; py++) {
-    // Y=0 at the bottom of the plot; image rows increase downward → flip v.
-    const v = 1 - py / (res - 1);
-    for (let px = 0; px < res; px++) {
-      const u = px / (res - 1);
-      const [r, g, b] = getColor(bilinearSample(matrix, u, v));
-      const idx = (py * res + px) * 4;
+  // Native-resolution colour raster upscaled with smoothing - matches HeatmapCanvas.tsx exactly,
+  // rather than interpolating in value space, so the two surfaces render the identical field.
+  const buffer = createCanvas(cols, rows);
+  const bctx = buffer.getContext("2d");
+  const image = bctx.createImageData(cols, rows);
+
+  for (let row = 0; row < rows; row++) {
+    // Matrix row 0 is Y=0 at the bottom; image row 0 is the top → flip.
+    const y = rows - 1 - row;
+    for (let col = 0; col < cols; col++) {
+      const [r, g, b] = getColor(matrix[row][col]);
+      const idx = (y * cols + col) * 4;
       image.data[idx] = r;
       image.data[idx + 1] = g;
       image.data[idx + 2] = b;
@@ -108,6 +104,24 @@ function drawHeatmapField(
 
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(buffer, left, top, size, size);
+
+  // Faint per-cell gridlines, same 6% white overlay as the web preview.
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < cols; i++) {
+    const x = left + (i / cols) * size;
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, top + size);
+    ctx.stroke();
+  }
+  for (let i = 1; i < rows; i++) {
+    const y = top + (i / rows) * size;
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(left + size, y);
+    ctx.stroke();
+  }
 
   ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1.2;
@@ -168,6 +182,7 @@ function drawAxes(
 
 function drawColorbar(
   ctx: SKRSContext2D,
+  getColor: (value: number) => readonly [number, number, number],
   min: number,
   max: number,
   peakLabel: number,
@@ -180,11 +195,11 @@ function drawColorbar(
   const barWidth = BASE.colorbarWidth;
   const barHeight = plotSize;
 
-  // Gradient bar: max at top, min at bottom
+  // Gradient bar: max at top, min at bottom - same ramp (and fit) as the field above.
   const steps = 128;
   for (let i = 0; i < steps; i++) {
     const t = 1 - i / (steps - 1);
-    const [r, g, b] = sampleStops(t);
+    const [r, g, b] = getColor(min + t * (max - min));
     ctx.fillStyle = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
     const y = barTop + (i / steps) * barHeight;
     ctx.fillRect(barLeft, y, barWidth, barHeight / steps + 1);
