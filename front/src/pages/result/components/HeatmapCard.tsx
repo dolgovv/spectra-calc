@@ -21,8 +21,8 @@ function colorbarTicks(min: number, max: number): number[] {
 }
 
 export default function HeatmapCard({ result }: HeatmapCardProps) {
-  // xTicks is every 100 µm (10 labels) — too dense under the map, so label every other one.
-  const xTicks = result.xTicks.filter((_, i) => i % 2 === 0);
+  // Row 0 is Y=0 at the bottom of the map, but the label column reads top-to-bottom.
+  const yTicks = [...result.yTicks].reverse();
 
   const scale = useMemo(
     () => createHeatmapScale(result.matrix.flat(), result.colorScaleMin, result.colorScaleMax),
@@ -47,14 +47,24 @@ export default function HeatmapCard({ result }: HeatmapCardProps) {
             Y, мкм
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="aspect-square w-full overflow-hidden rounded border border-border">
-              <HeatmapCanvas matrix={result.matrix} scale={scale} />
-            </div>
-            <div className="flex justify-between px-0.5 pt-1 font-mono text-[9.5px] text-muted-faint">
-              {xTicks.map((tick) => (
-                <span key={tick}>{tick}</span>
-              ))}
+          <div className="min-w-0 flex-1">
+            {/* Grid, not flex: the Y-label column must stretch to the square's row only, not to
+                the square + X-tick row + title stacked below it (which flex would do as siblings). */}
+            <div className="grid grid-cols-[auto_1fr] items-stretch gap-1.5">
+              <div className="flex flex-col justify-between py-0.5 text-right font-mono text-[9.5px] text-muted-faint">
+                {yTicks.map((tick) => (
+                  <span key={tick}>{tick}</span>
+                ))}
+              </div>
+              <div className="aspect-square w-full overflow-hidden rounded border border-border">
+                <HeatmapCanvas matrix={result.matrix} scale={scale} />
+              </div>
+              <div />
+              <div className="flex justify-between px-0.5 pt-1 font-mono text-[9.5px] text-muted-faint">
+                {result.xTicks.map((tick) => (
+                  <span key={tick}>{tick}</span>
+                ))}
+              </div>
             </div>
             <div className="mt-2 text-center font-mono text-[11px] text-muted-faint">X, мкм</div>
           </div>
