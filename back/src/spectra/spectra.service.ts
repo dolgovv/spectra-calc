@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { CalcService } from '../calc/calc.service';
+import { CalcService, type ComputeDisplayOptions } from '../calc/calc.service';
 import { RenderService, type RenderedArtifacts } from '../render/render.service';
 import { StorageService } from '../storage/storage.service';
 import { QueueService } from '../queue/queue.service';
@@ -27,12 +27,10 @@ const FILE_NAMES = {
   metaJson: 'result.json',
 } as const;
 
-export interface CalculateParams {
+export interface CalculateParams extends ComputeDisplayOptions {
   buffer: Buffer;
   interval: SpectrumInterval;
   sourceFileName: string;
-  /** Heatmap axis step in µm; undefined defers to CalcService's default (100). */
-  spatialStepMicrons?: number;
 }
 
 @Injectable()
@@ -89,9 +87,9 @@ export class SpectraService {
     buffer,
     interval,
     sourceFileName,
-    spatialStepMicrons,
+    ...displayOptions
   }: CalculateParams): Promise<InMemoryCalculation> {
-    const computation = this.calc.compute(buffer, interval, sourceFileName, spatialStepMicrons);
+    const computation = this.calc.compute(buffer, interval, sourceFileName, displayOptions);
     const artifacts = await this.render.render(computation);
     return { computation, artifacts };
   }

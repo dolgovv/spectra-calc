@@ -6,31 +6,32 @@ interface Stop {
 }
 
 /**
- * Intensity colour ramp, low → high: black · violet · magenta · coral · cream (matplotlib's magma).
- *
- * A heat ramp has to be readable, not just on-brand, and lightness is what carries it. The house
- * ink·teal·coral·magenta·pink ramp was not monotone in lightness — coral (L .626) sat *above*
- * magenta (L .593), a dip that reads as a false edge, and those two were only ΔL .033 apart, so the
- * band holding most of the data was perceptually flat. Its whole range spanned L .23–.71.
- *
- * magma is monotone by construction, steps evenly (ΔL .30/.19/.20/.23) and spans L .05–.98 — about
- * twice the perceptual room to show structure — and stays legible with colour-vision deficiency,
- * since order survives in lightness alone. It keeps the dark→hot metaphor and its magenta is a
- * cousin of the brand accent.
- *
- * `at` is each colour's *design* position — the share of the map that should have turned that
- * colour by then. It is deliberately not a position on the value axis: see createHeatmapScale.
+ * Design positions of the four gradient stops - fixed; only their colours are user-chosen (see
+ * DEFAULT_COLOR_* in types/spectra.ts). Originally a fixed 5-stop matplotlib "magma" ramp (black
+ * · violet · magenta · coral · cream); it was chosen for lightness monotonicity - unlike the old
+ * house ink·teal·coral·magenta·pink ramp, whose coral sat *above* magenta in lightness, reading as
+ * a false edge. Now the user can retint it, so only these four positions are fixed; the defaults
+ * are magma resampled at 0/33/67/100% (its own two dropped stops folded into their neighbours).
  */
-export const HEATMAP_STOPS: Stop[] = [
-  { at: 0, rgb: [0x00, 0x00, 0x04] },
-  { at: 0.25, rgb: [0x51, 0x12, 0x7c] },
-  { at: 0.5, rgb: [0xb6, 0x36, 0x79] },
-  { at: 0.75, rgb: [0xfb, 0x88, 0x61] },
-  { at: 1, rgb: [0xfc, 0xfd, 0xbf] },
-];
+const STOP_POSITIONS = [0, 1 / 3, 2 / 3, 1];
 
 /** Stops closer than this are treated as collapsed — the data is too flat to spread the ramp over. */
 const MIN_STOP_GAP = 0.02;
+
+/** Parses a "#rrggbb" string (as chosen on the home page / stored on the result) into RGB. */
+export function hexToRgb(hex: string): Rgb {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+}
+
+/**
+ * Mirrors back/src/render/heatmap/colorScale.ts exactly, positions and quantile-fitting alike -
+ * the exported PNG/PDF heatmap has to render pixel-for-pixel the same gradient as the web
+ * preview, and front/back don't share a package, so this is a deliberate duplicate, not drift.
+ */
+function buildStops(colors: readonly Rgb[]): Stop[] {
+  return STOP_POSITIONS.map((at, i) => ({ at, rgb: colors[i] }));
+}
 
 export interface HeatmapScale {
   /** Colour for a raw intensity value. */
@@ -68,19 +69,24 @@ function interpolate(stops: Stop[], t: number): Rgb {
  *
  * Spreading the ramp evenly over [min,max] assumes the values are spread evenly too, and they are
  * not: a uniform sample piles up near its own maximum, so most of the map lands in the top colours
- * and the low half of the ramp goes unused. Placing the teal stop at the 28th percentile (etc.)
- * means ~28% of the cells are below teal by construction, whatever the distribution — so every
- * colour does equal work and the structure stays visible.
+ * and the low half of the ramp goes unused. Placing a stop at its own quantile means that share of
+ * the cells are below it by construction, whatever the distribution — so every colour does equal
+ * work and the structure stays visible.
  *
  * The value axis itself stays linear: only the colours slide along it, which is what the colorbar
  * gradient then shows. Its tick labels stay evenly spaced and keep telling the truth.
  */
-function fitStopsToData(values: number[], min: number, span: number): { at: number[]; fitted: boolean } {
-  const design = HEATMAP_STOPS.map((s) => s.at);
-  if (values.length < HEATMAP_STOPS.length) return { at: design, fitted: false };
+function fitStopsToData(
+  baseStops: Stop[],
+  values: number[],
+  min: number,
+  span: number,
+): { at: number[]; fitted: boolean } {
+  const design = baseStops.map((s) => s.at);
+  if (values.length < baseStops.length) return { at: design, fitted: false };
 
   const sorted = [...values].sort((a, b) => a - b);
-  const at = HEATMAP_STOPS.map((stop) => {
+  const at = baseStops.map((stop) => {
     const value = sorted[Math.round(stop.at * (sorted.length - 1))];
     return (value - min) / span;
   });
@@ -98,15 +104,23 @@ function fitStopsToData(values: number[], min: number, span: number): { at: numb
 
 /**
  * Builds the colour scale for one result. `values` are the cells being drawn; `min`/`max` are the
- * bounds the colorbar is labelled with (the backend's colorScaleMin/Max).
+ * bounds the colorbar is labelled with (the backend's colorScaleMin/Max); `colors` are the four
+ * user-chosen stop colours at 0/33/67/100% - the same four the backend's PNG/PDF export takes, so
+ * the two surfaces produce the identical gradient.
  *
  * canvas and colorbar share these stops, and CSS gradients interpolate in sRGB just like
  * `interpolate` does — so the strip is an exact readout of the map, not an approximation of it.
  */
-export function createHeatmapScale(values: number[], min: number, max: number): HeatmapScale {
+export function createHeatmapScale(
+  values: number[],
+  min: number,
+  max: number,
+  colors: readonly Rgb[],
+): HeatmapScale {
+  const baseStops = buildStops(colors);
   const span = max - min || 1;
-  const { at, fitted } = fitStopsToData(values, min, span);
-  const stops: Stop[] = HEATMAP_STOPS.map((stop, i) => ({ at: at[i], rgb: stop.rgb }));
+  const { at, fitted } = fitStopsToData(baseStops, values, min, span);
+  const stops: Stop[] = baseStops.map((stop, i) => ({ at: at[i], rgb: stop.rgb }));
 
   return {
     colorAt: (value) => interpolate(stops, (value - min) / span),

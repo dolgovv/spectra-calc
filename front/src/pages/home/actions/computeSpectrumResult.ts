@@ -6,6 +6,11 @@ export interface ComputeSpectrumResultParams {
   interval: SpectrumInterval;
   /** Heatmap axis step in µm; omitted defers to the backend's default (100). */
   step?: number;
+  /** Gradient colours ("#rrggbb") at 0/33/67/100% of intensity; omitted defer to the backend's magma defaults. */
+  colorLow?: string;
+  colorMidLow?: string;
+  colorMidHigh?: string;
+  colorHigh?: string;
 }
 
 /**
@@ -17,12 +22,20 @@ export async function computeSpectrumResult({
   file,
   interval,
   step,
+  colorLow,
+  colorMidLow,
+  colorMidHigh,
+  colorHigh,
 }: ComputeSpectrumResultParams): Promise<SpectrumResult> {
   const form = new FormData();
   form.append("archive", file);
   form.append("from", String(interval.from));
   form.append("to", String(interval.to));
   if (step !== undefined) form.append("step", String(step));
+  if (colorLow !== undefined) form.append("colorLow", colorLow);
+  if (colorMidLow !== undefined) form.append("colorMidLow", colorMidLow);
+  if (colorMidHigh !== undefined) form.append("colorMidHigh", colorMidHigh);
+  if (colorHigh !== undefined) form.append("colorHigh", colorHigh);
 
   let response: Response;
   try {

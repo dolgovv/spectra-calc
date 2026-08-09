@@ -37,6 +37,10 @@ export class SpectraController {
       interval: { from: body.from, to: body.to },
       sourceFileName: filename,
       spatialStepMicrons: body.step,
+      colorLow: body.colorLow,
+      colorMidLow: body.colorMidLow,
+      colorMidHigh: body.colorMidHigh,
+      colorHigh: body.colorHigh,
     });
   }
 }

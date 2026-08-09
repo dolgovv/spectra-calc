@@ -3,11 +3,27 @@ import { extractSpectraFromZip } from './parsers/extractSpectraFromZip';
 import { usefulIntensity } from './math/usefulIntensity';
 import { buildMatrix } from './math/buildMatrix';
 import { computeStats } from './math/computeStats';
-import { DEFAULT_SPATIAL_STEP_MICRONS, MIN_GRID_SIZE } from '../common/constants';
+import {
+  DEFAULT_COLOR_HIGH,
+  DEFAULT_COLOR_LOW,
+  DEFAULT_COLOR_MID_HIGH,
+  DEFAULT_COLOR_MID_LOW,
+  DEFAULT_SPATIAL_STEP_MICRONS,
+  MIN_GRID_SIZE,
+} from '../common/constants';
 import type {
   SpectrumComputation,
   SpectrumInterval,
 } from '../common/types/spectra.types';
+
+/** Display-only knobs: none of these affect the matrix or stats, only how the map is drawn. */
+export interface ComputeDisplayOptions {
+  spatialStepMicrons?: number;
+  colorLow?: string;
+  colorMidLow?: string;
+  colorMidHigh?: string;
+  colorHigh?: string;
+}
 
 @Injectable()
 export class CalcService {
@@ -22,8 +38,15 @@ export class CalcService {
     buffer: Buffer,
     interval: SpectrumInterval,
     sourceFileName: string,
-    spatialStepMicrons: number = DEFAULT_SPATIAL_STEP_MICRONS,
+    displayOptions: ComputeDisplayOptions = {},
   ): SpectrumComputation {
+    const {
+      spatialStepMicrons = DEFAULT_SPATIAL_STEP_MICRONS,
+      colorLow = DEFAULT_COLOR_LOW,
+      colorMidLow = DEFAULT_COLOR_MID_LOW,
+      colorMidHigh = DEFAULT_COLOR_MID_HIGH,
+      colorHigh = DEFAULT_COLOR_HIGH,
+    } = displayOptions;
     const start = process.hrtime.bigint();
 
     if (interval.from >= interval.to) {
@@ -81,6 +104,10 @@ export class CalcService {
       computedAt: new Date().toISOString(),
       spectraFound: spectra.length,
       spectraDropped,
+      colorLow,
+      colorMidLow,
+      colorMidHigh,
+      colorHigh,
     };
   }
 

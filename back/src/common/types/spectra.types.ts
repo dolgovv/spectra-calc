@@ -58,6 +58,11 @@ export interface SpectrumComputation {
   spectraFound: number;
   /** How many trailing spectra were dropped to fit the square grid (0 if none). */
   spectraDropped: number;
+  /** Gradient colours ("#rrggbb") at 0/33/67/100% of intensity. Display-only, like xTicks. */
+  colorLow: string;
+  colorMidLow: string;
+  colorMidHigh: string;
+  colorHigh: string;
 }
 
 /** Full result returned to clients (computation + persisted file links). */

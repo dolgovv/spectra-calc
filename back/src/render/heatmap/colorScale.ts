@@ -5,22 +5,26 @@ interface Stop {
   rgb: RGB;
 }
 
-/**
- * Intensity colour ramp, low → high: black · violet · magenta · coral · cream (matplotlib's
- * magma). Mirrors front/src/lib/heatmapPalette.ts exactly, stops and quantile-fitting alike -
- * the exported PNG/PDF heatmap has to render pixel-for-pixel the same gradient as the web
- * preview, and front/back don't share a package, so this is a deliberate duplicate, not drift.
- */
-const HEATMAP_STOPS: Stop[] = [
-  { at: 0, rgb: [0x00, 0x00, 0x04] },
-  { at: 0.25, rgb: [0x51, 0x12, 0x7c] },
-  { at: 0.5, rgb: [0xb6, 0x36, 0x79] },
-  { at: 0.75, rgb: [0xfb, 0x88, 0x61] },
-  { at: 1, rgb: [0xfc, 0xfd, 0xbf] },
-];
+/** Design positions of the four gradient stops - fixed; only their colours are user-chosen. */
+const STOP_POSITIONS = [0, 1 / 3, 2 / 3, 1];
 
 /** Stops closer than this are treated as collapsed — the data is too flat to spread the ramp over. */
 const MIN_STOP_GAP = 0.02;
+
+/** Parses a "#rrggbb" string (as stored on the computation) into an RGB triple. */
+export function hexToRgb(hex: string): RGB {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+}
+
+/**
+ * Mirrors front/src/lib/heatmapPalette.ts exactly, positions and quantile-fitting alike - the
+ * exported PNG/PDF heatmap has to render pixel-for-pixel the same gradient as the web preview,
+ * and front/back don't share a package, so this is a deliberate duplicate, not drift.
+ */
+function buildStops(colors: readonly RGB[]): Stop[] {
+  return STOP_POSITIONS.map((at, i) => ({ at, rgb: colors[i] }));
+}
 
 function interpolate(stops: Stop[], t: number): RGB {
   const clamped = Math.min(Math.max(t, 0), 1);
@@ -45,12 +49,12 @@ function interpolate(stops: Stop[], t: number): RGB {
 }
 
 /** Moves each stop onto the value at its own quantile of the data - see heatmapPalette.ts for why. */
-function fitStopsToData(values: number[], min: number, span: number): number[] {
-  const design = HEATMAP_STOPS.map((s) => s.at);
-  if (values.length < HEATMAP_STOPS.length) return design;
+function fitStopsToData(baseStops: Stop[], values: number[], min: number, span: number): number[] {
+  const design = baseStops.map((s) => s.at);
+  if (values.length < baseStops.length) return design;
 
   const sorted = [...values].sort((a, b) => a - b);
-  const at = HEATMAP_STOPS.map((stop) => {
+  const at = baseStops.map((stop) => {
     const value = sorted[Math.round(stop.at * (sorted.length - 1))];
     return (value - min) / span;
   });
@@ -68,16 +72,19 @@ function fitStopsToData(values: number[], min: number, span: number): number[] {
 
 /**
  * Builds the colour-at-value function for one result. `values` are the matrix cells being drawn;
- * `min`/`max` are the bounds the colorbar is labelled with (colorScaleMin/Max) - same inputs the
- * frontend's createHeatmapScale takes, so the two surfaces produce the identical gradient.
+ * `min`/`max` are the bounds the colorbar is labelled with (colorScaleMin/Max); `colors` are the
+ * four user-chosen stop colours at 0/33/67/100% - same inputs the frontend's createHeatmapScale
+ * takes, so the two surfaces produce the identical gradient.
  */
 export function createHeatmapScale(
   values: number[],
   min: number,
   max: number,
+  colors: readonly RGB[],
 ): (value: number) => RGB {
+  const baseStops = buildStops(colors);
   const span = max - min || 1;
-  const at = fitStopsToData(values, min, span);
-  const stops: Stop[] = HEATMAP_STOPS.map((stop, i) => ({ at: at[i], rgb: stop.rgb }));
+  const at = fitStopsToData(baseStops, values, min, span);
+  const stops: Stop[] = baseStops.map((stop, i) => ({ at: at[i], rgb: stop.rgb }));
   return (value: number) => interpolate(stops, (value - min) / span);
 }

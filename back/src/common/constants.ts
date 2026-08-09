@@ -16,6 +16,18 @@ export const MIN_SPATIAL_STEP_MICRONS = 20;
 export const MAX_SPATIAL_STEP_MICRONS = 400;
 
 /**
+ * Gradient colours at 0% / 33% / 67% / 100% of intensity - all four user-configurable per upload.
+ * Defaults are the original fixed magma ramp resampled at these four positions (it had five
+ * stops; the two dropped in between are folded into their neighbours), so leaving all four
+ * untouched reproduces close to today's heatmap.
+ */
+export const DEFAULT_COLOR_LOW = '#000004';
+export const DEFAULT_COLOR_MID_LOW = '#731e7b';
+export const DEFAULT_COLOR_MID_HIGH = '#e46d69';
+export const DEFAULT_COLOR_HIGH = '#fcfdbf';
+export const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+/**
  * Sr (relative std deviation) → uniformity category thresholds.
  * The spec lists: <0.15 excellent, <0.20 acceptable, <0.30 satisfactory, ≥0.33 unacceptable.
  * That leaves a [0.30, 0.33) gap; we close it at 0.30 so categorization is continuous.

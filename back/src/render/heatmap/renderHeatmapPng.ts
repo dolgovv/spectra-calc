@@ -1,5 +1,5 @@
 import { createCanvas, type SKRSContext2D } from "@napi-rs/canvas";
-import { createHeatmapScale } from "./colorScale";
+import { createHeatmapScale, hexToRgb } from "./colorScale";
 import { ensureCanvasFonts, CANVAS_FONT_FAMILY } from "../fonts";
 import type { SpectrumComputation } from "../../common/types/spectra.types";
 
@@ -31,9 +31,24 @@ export function renderHeatmapPng(
 ): Buffer {
   ensureCanvasFonts();
   const scale = options.scale ?? 2;
-  const { matrix, xTicks, yTicks, colorScaleMin, colorScaleMax, peakLabel } =
-    computation;
-  const getColor = createHeatmapScale(matrix.flat(), colorScaleMin, colorScaleMax);
+  const {
+    matrix,
+    xTicks,
+    yTicks,
+    colorScaleMin,
+    colorScaleMax,
+    peakLabel,
+    colorLow,
+    colorMidLow,
+    colorMidHigh,
+    colorHigh,
+  } = computation;
+  const getColor = createHeatmapScale(
+    matrix.flat(),
+    colorScaleMin,
+    colorScaleMax,
+    [colorLow, colorMidLow, colorMidHigh, colorHigh].map(hexToRgb),
+  );
 
   const totalWidth =
     BASE.marginLeft +

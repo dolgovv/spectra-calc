@@ -4,9 +4,15 @@ import Panel from '../../../common/components/Panel';
 import PanelTitle from '../../../common/components/PanelTitle';
 import Pill from '../../../common/components/Pill';
 import HeatmapCanvas from './HeatmapCanvas';
-import { createHeatmapScale } from '../../../lib/heatmapPalette';
+import { createHeatmapScale, hexToRgb } from '../../../lib/heatmapPalette';
 import { formatInteger } from '../../../lib/formatNumber';
-import type { SpectrumResult } from '../../../types/spectra';
+import {
+  DEFAULT_COLOR_HIGH,
+  DEFAULT_COLOR_LOW,
+  DEFAULT_COLOR_MID_HIGH,
+  DEFAULT_COLOR_MID_LOW,
+  type SpectrumResult,
+} from '../../../types/spectra';
 
 export interface HeatmapCardProps {
   result: SpectrumResult;
@@ -25,8 +31,27 @@ export default function HeatmapCard({ result }: HeatmapCardProps) {
   const yTicks = [...result.yTicks].reverse();
 
   const scale = useMemo(
-    () => createHeatmapScale(result.matrix.flat(), result.colorScaleMin, result.colorScaleMax),
-    [result.matrix, result.colorScaleMin, result.colorScaleMax],
+    () =>
+      createHeatmapScale(
+        result.matrix.flat(),
+        result.colorScaleMin,
+        result.colorScaleMax,
+        [
+          result.colorLow || DEFAULT_COLOR_LOW,
+          result.colorMidLow || DEFAULT_COLOR_MID_LOW,
+          result.colorMidHigh || DEFAULT_COLOR_MID_HIGH,
+          result.colorHigh || DEFAULT_COLOR_HIGH,
+        ].map(hexToRgb),
+      ),
+    [
+      result.matrix,
+      result.colorScaleMin,
+      result.colorScaleMax,
+      result.colorLow,
+      result.colorMidLow,
+      result.colorMidHigh,
+      result.colorHigh,
+    ],
   );
 
   return (
