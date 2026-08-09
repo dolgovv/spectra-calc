@@ -6,11 +6,14 @@
 export const MIN_GRID_SIZE = 4;
 
 /**
- * Fixed physical raster step in micrometres, per points.dat - the stage moves 100 µm between
- * adjacent spectra regardless of how many were captured, so tick spacing stays this constant
- * and the map's total extent scales with gridSize instead (e.g. 8×8 → 0…700, still step 100).
+ * Physical raster step in micrometres between adjacent spectra - fixed per archive (the stage
+ * moves this many µm between points), but not always 100: the user picks it per upload since it
+ * depends on how the map was scanned. Only feeds tick labels (xTicks/yTicks); the map's total
+ * extent scales with gridSize (e.g. 8×8 at 100 µm → 0…700).
  */
-export const SPATIAL_STEP_MICRONS = 100;
+export const DEFAULT_SPATIAL_STEP_MICRONS = 100;
+export const MIN_SPATIAL_STEP_MICRONS = 20;
+export const MAX_SPATIAL_STEP_MICRONS = 400;
 
 /**
  * Sr (relative std deviation) → uniformity category thresholds.

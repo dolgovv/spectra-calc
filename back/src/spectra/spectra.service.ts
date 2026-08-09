@@ -31,6 +31,8 @@ export interface CalculateParams {
   buffer: Buffer;
   interval: SpectrumInterval;
   sourceFileName: string;
+  /** Heatmap axis step in µm; undefined defers to CalcService's default (100). */
+  spatialStepMicrons?: number;
 }
 
 @Injectable()
@@ -87,8 +89,9 @@ export class SpectraService {
     buffer,
     interval,
     sourceFileName,
+    spatialStepMicrons,
   }: CalculateParams): Promise<InMemoryCalculation> {
-    const computation = this.calc.compute(buffer, interval, sourceFileName);
+    const computation = this.calc.compute(buffer, interval, sourceFileName, spatialStepMicrons);
     const artifacts = await this.render.render(computation);
     return { computation, artifacts };
   }

@@ -36,6 +36,7 @@ export class SpectraController {
       buffer: archive.buffer,
       interval: { from: body.from, to: body.to },
       sourceFileName: filename,
+      spatialStepMicrons: body.step,
     });
   }
 }
