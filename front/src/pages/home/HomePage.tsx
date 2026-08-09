@@ -7,7 +7,11 @@ import { validateZipFile } from "./actions/validateZipFile";
 import { computeSpectrumResult } from "./actions/computeSpectrumResult";
 import { saveResultToSession } from "../../lib/resultStorage";
 import { ROUTES } from "../../router/routes";
-import { DEFAULT_INTERVAL, type SpectrumInterval } from "../../types/spectra";
+import {
+  DEFAULT_INTERVAL,
+  DEFAULT_SPATIAL_STEP_MICRONS,
+  type SpectrumInterval,
+} from "../../types/spectra";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -15,6 +19,7 @@ export default function HomePage() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [interval, setIntervalValue] =
     useState<SpectrumInterval>(DEFAULT_INTERVAL);
+  const [step, setStep] = useState<number>(DEFAULT_SPATIAL_STEP_MICRONS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -34,7 +39,7 @@ export default function HomePage() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const result = await computeSpectrumResult({ file, interval });
+      const result = await computeSpectrumResult({ file, interval, step });
       saveResultToSession(result);
       navigate(ROUTES.result, { state: { result } });
     } catch (err) {
@@ -53,9 +58,11 @@ export default function HomePage() {
         file={file}
         fileError={fileError}
         interval={interval}
+        step={step}
         isSubmitting={isSubmitting}
         onFileSelected={handleFileSelected}
         onIntervalChange={setIntervalValue}
+        onStepChange={setStep}
         onSubmit={handleSubmit}
       />
       {submitError && (

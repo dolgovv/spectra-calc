@@ -7,6 +7,11 @@ export const DEFAULT_INTERVAL_MIN = 200;
 export const DEFAULT_INTERVAL_MAX = 3000; // typical Raman-shift span (cm⁻¹)
 export const DEFAULT_INTERVAL: SpectrumInterval = { from: 580, to: 650 };
 
+/** Heatmap axis step in µm - display-only, doesn't affect the computed matrix or stats. */
+export const MIN_SPATIAL_STEP_MICRONS = 20;
+export const MAX_SPATIAL_STEP_MICRONS = 400;
+export const DEFAULT_SPATIAL_STEP_MICRONS = 100;
+
 export type CategoryKey =
   | "excellent"
   | "acceptable"

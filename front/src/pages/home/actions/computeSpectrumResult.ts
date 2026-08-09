@@ -4,6 +4,8 @@ import type { SpectrumInterval, SpectrumResult } from "../../../types/spectra";
 export interface ComputeSpectrumResultParams {
   file: File;
   interval: SpectrumInterval;
+  /** Heatmap axis step in µm; omitted defers to the backend's default (100). */
+  step?: number;
 }
 
 /**
@@ -14,11 +16,13 @@ export interface ComputeSpectrumResultParams {
 export async function computeSpectrumResult({
   file,
   interval,
+  step,
 }: ComputeSpectrumResultParams): Promise<SpectrumResult> {
   const form = new FormData();
   form.append("archive", file);
   form.append("from", String(interval.from));
   form.append("to", String(interval.to));
+  if (step !== undefined) form.append("step", String(step));
 
   let response: Response;
   try {

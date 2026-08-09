@@ -61,6 +61,49 @@ body::after {
   background: transparent;
 }
 
+/* Single-handle step slider: track fill follows --fill (set inline from the current value),
+   set on the element itself so both engines' native track can just read it. */
+.step-slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #e8567f var(--fill),
+    rgba(255, 255, 255, 0.12) var(--fill)
+  );
+  outline: none;
+  cursor: pointer;
+}
+.step-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e8567f;
+  border: 2px solid #0a0a0c;
+  cursor: ew-resize;
+}
+.step-slider-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e8567f;
+  border: 2px solid #0a0a0c;
+  cursor: ew-resize;
+}
+.step-slider-input::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.step-slider-input::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: #e8567f;
+}
+
 /* Number inputs read as instrument readouts — drop the browser spinners. */
 .readout-input::-webkit-outer-spin-button,
 .readout-input::-webkit-inner-spin-button {
