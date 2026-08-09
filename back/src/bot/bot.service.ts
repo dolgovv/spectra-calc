@@ -75,15 +75,17 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   private registerHandlers(bot: Bot): void {
     bot.command("start", (ctx) =>
       ctx.reply(
-        "SpectraCalc-бот. Пришлите .zip архив со 100 спектрами и укажите интервал в подписи - " +
-          "в любом формате: «590-625», «590 625», «590/625» или «интервал 590 до 625».",
+        "SpectraCalc-бот. Пришлите .zip архив со спектрами (минимум 16, карта строится " +
+          "квадратом по короткой стороне - лишние файлы отбрасываются) и укажите интервал в " +
+          "подписи - в любом формате: «590-625», «590 625», «590/625» или «интервал 590 до 625».",
       ),
     );
 
     bot.command("help", (ctx) =>
       ctx.reply(
         "Отправьте .zip с подписью-интервалом (любой формат: «590-625», «590 625», " +
-          "«интервал 590 до 625») - верну карту, PDF и сводку.",
+          "«интервал 590 до 625») - верну карту, PDF и сводку. Архив может содержать любое " +
+          "количество спектров от 16 - карта строится квадратом по короткой стороне.",
       ),
     );
 
@@ -172,11 +174,17 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 /** Takes the computation rather than the persisted result — it only ever needed the numbers. */
 function botCaption(computation: SpectrumComputation): string {
   const s = computation.stats;
-  return (
-    `Интервал ${computation.interval.from}–${computation.interval.to} см⁻¹\n` +
-    `μ = ${Math.round(s.meanIntensity)} · σ = ${Math.round(s.stdDeviation)}\n` +
-    `Sr = ${s.relStdDeviationPercent.toFixed(1)} % - ${s.categoryLabel}`
-  );
+  const lines = [
+    `Интервал ${computation.interval.from}–${computation.interval.to} см⁻¹`,
+    `μ = ${Math.round(s.meanIntensity)} · σ = ${Math.round(s.stdDeviation)}`,
+    `Sr = ${s.relStdDeviationPercent.toFixed(1)} % - ${s.categoryLabel}`,
+  ];
+  if (computation.spectraDropped > 0) {
+    lines.push(
+      `⚠ Сетка ${computation.gridSize}×${computation.gridSize}: ${computation.spectraDropped} лишних файлов отброшено (найдено ${computation.spectraFound})`,
+    );
+  }
+  return lines.join("\n");
 }
 
 /**

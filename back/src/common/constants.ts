@@ -1,6 +1,9 @@
-/** Spatial map is a fixed 10×10 grid of 100 spectra. */
-export const GRID_SIZE = 10;
-export const EXPECTED_SPECTRA = GRID_SIZE * GRID_SIZE; // 100
+/**
+ * Spatial map side is derived per-request from the number of spectra found in the archive
+ * (the largest square that fits, e.g. 65 spectra → 8×8, dropping the remainder).
+ * Below this side, a matrix isn't meaningful (and tick spacing needs gridSize > 1).
+ */
+export const MIN_GRID_SIZE = 4;
 
 /** Physical extent of the map in micrometres (0…900, step 100), per points.dat. */
 export const SPATIAL_EXTENT_MICRONS = 900;

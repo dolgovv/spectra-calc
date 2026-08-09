@@ -7,7 +7,7 @@ const SPECTRUM_EXTENSIONS = /\.(esp|txt|asc|csv)$/i;
 /**
  * Extracts spectra from a ZIP buffer. Selects two-column text spectra by extension
  * (.esp/.txt/.asc/.csv), ignoring auxiliary files (points.dat, maps/*.dat, folders),
- * and returns them in natural filename order (1, 2, …, 100).
+ * and returns them in natural filename order (1, 2, …, N).
  */
 export function extractSpectraFromZip(buffer: Buffer): Spectrum[] {
   let zip: AdmZip;

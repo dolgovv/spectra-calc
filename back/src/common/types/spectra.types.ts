@@ -43,7 +43,7 @@ export interface ResultFileLinks {
 export interface SpectrumComputation {
   interval: SpectrumInterval;
   gridSize: number;
-  /** matrix[row][col]; row 0 = first 10 spectra = bottom (Y=0), col = X. */
+  /** matrix[row][col]; row 0 = first gridSize spectra = bottom (Y=0), col = X. */
   matrix: number[][];
   xTicks: number[];
   yTicks: number[];
@@ -54,6 +54,10 @@ export interface SpectrumComputation {
   stats: SpectrumStats;
   sourceFileName: string;
   computedAt: string;
+  /** Total valid spectrum files found in the archive, before truncation to the square grid. */
+  spectraFound: number;
+  /** How many trailing spectra were dropped to fit the square grid (0 if none). */
+  spectraDropped: number;
 }
 
 /** Full result returned to clients (computation + persisted file links). */

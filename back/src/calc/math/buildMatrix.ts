@@ -1,10 +1,8 @@
-import { GRID_SIZE } from '../../common/constants';
-
 /**
- * Reshapes a flat list of `GRID_SIZE²` values into a GRID_SIZE×GRID_SIZE matrix:
- * the first `GRID_SIZE` values form row 0, the next `GRID_SIZE` form row 1, etc.
+ * Reshapes a flat list of `gridSize²` values into a gridSize×gridSize matrix:
+ * the first `gridSize` values form row 0, the next `gridSize` form row 1, etc.
  */
-export function buildMatrix(values: number[], gridSize = GRID_SIZE): number[][] {
+export function buildMatrix(values: number[], gridSize: number): number[][] {
   const expected = gridSize * gridSize;
   if (values.length !== expected) {
     throw new Error(`Ожидалось ${expected} значений, получено ${values.length}`);

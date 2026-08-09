@@ -3,11 +3,7 @@ import { extractSpectraFromZip } from './parsers/extractSpectraFromZip';
 import { usefulIntensity } from './math/usefulIntensity';
 import { buildMatrix } from './math/buildMatrix';
 import { computeStats } from './math/computeStats';
-import {
-  EXPECTED_SPECTRA,
-  GRID_SIZE,
-  SPATIAL_EXTENT_MICRONS,
-} from '../common/constants';
+import { MIN_GRID_SIZE, SPATIAL_EXTENT_MICRONS } from '../common/constants';
 import type {
   SpectrumComputation,
   SpectrumInterval,
@@ -16,9 +12,11 @@ import type {
 @Injectable()
 export class CalcService {
   /**
-   * Full computational pipeline: ZIP buffer + interval → 10×10 useful-intensity matrix,
-   * statistics and metadata. Throws BadRequestException for invalid input (wrong file count,
-   * empty spectra, interval out of range).
+   * Full computational pipeline: ZIP buffer + interval → square useful-intensity matrix,
+   * statistics and metadata. The matrix side is the largest square that fits the number of
+   * spectra found (e.g. 65 spectra → 8×8, 145 → 12×12), dropping whatever doesn't fit into
+   * that square. Throws BadRequestException for invalid input (too few spectra, empty
+   * spectra, interval out of range).
    */
   compute(
     buffer: Buffer,
@@ -32,15 +30,19 @@ export class CalcService {
     }
 
     const spectra = extractSpectraFromZip(buffer);
-    if (spectra.length !== EXPECTED_SPECTRA) {
+    const gridSize = Math.floor(Math.sqrt(spectra.length));
+    if (gridSize < MIN_GRID_SIZE) {
       throw new BadRequestException(
-        `Ожидалось ровно ${EXPECTED_SPECTRA} файлов спектров (.txt/.esp), найдено ${spectra.length}`,
+        `Недостаточно спектров: найдено ${spectra.length}, нужно минимум ${MIN_GRID_SIZE * MIN_GRID_SIZE} (сетка ${MIN_GRID_SIZE}×${MIN_GRID_SIZE})`,
       );
     }
+    const usedCount = gridSize * gridSize;
+    const usedSpectra = spectra.slice(0, usedCount);
+    const spectraDropped = spectra.length - usedCount;
 
     const usefulValues: number[] = [];
     const peakWavenumbers: number[] = [];
-    for (const spectrum of spectra) {
+    for (const spectrum of usedSpectra) {
       if (spectrum.wavenumbers.length === 0) {
         throw new BadRequestException(`Файл "${spectrum.name}" не содержит данных спектра`);
       }
@@ -53,20 +55,20 @@ export class CalcService {
       }
     }
 
-    const matrix = buildMatrix(usefulValues, GRID_SIZE);
+    const matrix = buildMatrix(usefulValues, gridSize);
     const calcTimeSeconds = Number(process.hrtime.bigint() - start) / 1e9;
     const stats = computeStats(
       usefulValues,
-      spectra.length,
+      usedSpectra.length,
       Math.round(calcTimeSeconds * 10) / 10,
     );
 
-    const ticks = this.buildTicks(GRID_SIZE);
+    const ticks = this.buildTicks(gridSize);
     const [colorScaleMin, colorScaleMax] = this.colorBounds(usefulValues);
 
     return {
       interval,
-      gridSize: GRID_SIZE,
+      gridSize,
       matrix,
       xTicks: ticks,
       yTicks: ticks,
@@ -76,6 +78,8 @@ export class CalcService {
       stats,
       sourceFileName,
       computedAt: new Date().toISOString(),
+      spectraFound: spectra.length,
+      spectraDropped,
     };
   }
 
