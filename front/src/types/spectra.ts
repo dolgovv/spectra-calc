@@ -49,5 +49,9 @@ export interface SpectrumResult {
   stats: SpectrumStats;
   sourceFileName: string;
   computedAt: string;
+  /** Total valid spectrum files found in the archive, before truncation to the square grid. */
+  spectraFound: number;
+  /** How many trailing spectra were dropped to fit the square grid (0 if none). */
+  spectraDropped: number;
   files: ResultFileLinks;
 }

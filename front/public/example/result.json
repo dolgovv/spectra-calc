@@ -167,6 +167,8 @@
   },
   "sourceFileName": "substrate3(Ag_25_CTAB_2,5_day2)_R6G(1e-7).zip",
   "computedAt": "2026-07-15T18:33:36.678Z",
+  "spectraFound": 100,
+  "spectraDropped": 0,
   "files": {
     "heatmapPng": "/example/heatmap.png",
     "reportPdf": "/example/report.pdf",
