@@ -82,7 +82,7 @@ jobs:
           touch back.env
           trap 'docker compose logs' EXIT
           docker compose up -d --wait
-          url=http://localhost:8090
+          url=http://localhost:8082
           curl -fsS -o /dev/null "$url/"
           curl -fsS -o /dev/null "$url/example"
           curl -fsS -o /dev/null "$url/example/result.json"
