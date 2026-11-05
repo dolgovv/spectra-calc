@@ -24,3 +24,33 @@
 - **Backend** - TypeScript + NestJS, `@napi-rs/canvas` (рендер PNG), `pdfkit` (PDF),
   `adm-zip`, Telegram-бот на `grammy`
 - **Frontend** - TypeScript + React + Vite, Tailwind
+
+## Тесты
+
+```bash
+cd back && npm ci && npm test     # Jest: юнит-тесты, API и реальные архивы из test_files/
+cd front && npm ci && npm test    # Vitest: логика и пользовательские сценарии
+```
+
+## CI/CD
+
+[`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml):
+
+1. **Тесты** - на пуш в любую ветку: проверка типов и тесты бэка и фронта
+2. **Сборка** - на пуш/мердж в `develop`, если тесты прошли: артефакт со статикой фронта и
+   всем, что нужно для образа бэка
+3. **Деплой** - из этого артефакта: на сервере пересобирается образ из `back/Dockerfile` и
+   перезапускается контейнер (с проверкой, что приложение поднялось), затем заливается статика
+
+Для деплоя нужно один раз настроить в Settings → Secrets and variables → Actions:
+
+| Что      | Имя               | Значение                                                       |
+| -------- | ----------------- | -------------------------------------------------------------- |
+| secret   | `SSH_PRIVATE_KEY` | приватный ключ, публичная часть - в `authorized_keys` сервера  |
+| secret   | `SSH_KNOWN_HOSTS` | вывод `ssh-keyscan -p <порт> <хост>` (сверьте с сервером)      |
+| variable | `SSH_HOST`        | адрес сервера                                                  |
+| variable | `SSH_USER`        | пользователь с доступом к Docker и каталогам деплоя            |
+| variable | `SSH_PORT`        | порт SSH, необязательно (по умолчанию `22`)                    |
+
+`.env` на сервере (`/srv/spectra-calc/.env`) workflow не трогает - он должен там уже лежать.
+Ручной `deploy.sh` работает как раньше и управляет тем же контейнером.

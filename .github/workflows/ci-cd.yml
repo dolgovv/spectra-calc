@@ -1,0 +1,195 @@
+name: CI/CD
+
+# A merge lands on develop as a push, so this one trigger covers merges too.
+on:
+  push:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22' # same major as back/Dockerfile
+
+jobs:
+  test-back:
+    name: Test backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: back/package-lock.json
+      - run: npm ci
+      - name: Type-check
+        run: npx tsc --noEmit -p tsconfig.json
+      - run: npm test
+
+  test-front:
+    name: Test frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+      - run: npm ci
+      - name: Type-check
+        run: npx tsc -b
+      - run: npm test
+
+  build:
+    name: Build artifact
+    needs: [test-back, test-front]
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            back/package-lock.json
+            front/package-lock.json
+
+      - name: Build frontend
+        working-directory: front
+        run: |
+          npm ci
+          npm run build # .env.production supplies the empty VITE_API_URL
+          # Without .env.production Vite bakes in the default from config.ts, and the production
+          # site would call localhost in the visitor's browser.
+          if grep -rq "localhost:3000" dist/assets/; then
+            echo "::error::localhost:3000 in the bundle, check front/.env.production"
+            exit 1
+          fi
+
+      - name: Build backend
+        working-directory: back
+        run: |
+          npm ci
+          npm run build
+
+      - name: Stage artifact
+        run: |
+          mkdir -p artifact/back
+          cp -r front/dist artifact/web
+          cp -r back/dist back/assets artifact/back/
+          cp back/package.json back/package-lock.json back/Dockerfile back/.dockerignore artifact/back/
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: spectra-calc-${{ github.sha }}
+          path: artifact/
+          if-no-files-found: error
+          include-hidden-files: true # .dockerignore
+          retention-days: 14
+
+  deploy:
+    name: Deploy to Docker on the VPS
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    # Queue deploys rather than cancel one halfway through replacing the container.
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    env:
+      WEB_ROOT: /var/www/spectra-calc.ru # root from nginx.conf
+      APP_DIR: /srv/spectra-calc # holds .env, storage/ and logs/, never rsync --delete it as a whole
+      IMAGE: spectra-calc-back
+      CONTAINER: spectra-calc-back
+    # No checkout: what gets deployed is exactly the artifact that the build job produced.
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: spectra-calc-${{ github.sha }}
+          path: artifact
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_HOST: ${{ vars.SSH_HOST }}
+          SSH_USER: ${{ vars.SSH_USER }}
+          SSH_PORT: ${{ vars.SSH_PORT || '22' }}
+        run: |
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName $SSH_HOST
+            User $SSH_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+          EOF
+
+      - name: Upload backend
+        run: |
+          ssh vps "mkdir -p $APP_DIR/storage $APP_DIR/logs"
+          rsync -az --delete artifact/back/dist/ "vps:$APP_DIR/dist/"
+          rsync -az --delete artifact/back/assets/ "vps:$APP_DIR/assets/"
+          rsync -az \
+            artifact/back/package.json artifact/back/package-lock.json \
+            artifact/back/Dockerfile artifact/back/.dockerignore \
+            "vps:$APP_DIR/"
+
+      - name: Rebuild and restart the container
+        run: |
+          ssh vps bash -s <<EOF
+          set -euo pipefail
+          cd "$APP_DIR"
+
+          if [[ ! -f .env ]]; then
+            echo "$APP_DIR/.env is missing - create it (PUBLIC_BASE_URL, PORT, ...)" >&2
+            exit 1
+          fi
+
+          docker build -t "$IMAGE" .
+          docker rm -f "$CONTAINER" 2>/dev/null || true
+          docker run -d --name "$CONTAINER" \
+            --restart unless-stopped \
+            -p 127.0.0.1:3000:3000 \
+            --env-file "$APP_DIR/.env" \
+            -v "$APP_DIR/storage:/app/storage" \
+            -v "$APP_DIR/logs:/app/logs" \
+            "$IMAGE"
+
+          # The API answers a POST with no archive with 400, so this proves the app is really up
+          # without running a calculation. node, because the slim image has no curl.
+          probe="fetch('http://127.0.0.1:3000/api/calculate', { method: 'POST' })
+            .then((r) => console.log(r.status), () => console.log(0))"
+          for attempt in \$(seq 1 15); do
+            if [[ "\$(docker exec "$CONTAINER" node -e "\$probe" 2>/dev/null)" == 400 ]]; then
+              echo "The container is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "The container did not come up" >&2
+          docker logs --tail 50 "$CONTAINER" >&2
+          exit 1
+          EOF
+
+      # Last, so a failed backend deploy does not publish a frontend the backend cannot serve.
+      - name: Upload frontend
+        run: rsync -az --delete artifact/web/ "vps:$WEB_ROOT/"

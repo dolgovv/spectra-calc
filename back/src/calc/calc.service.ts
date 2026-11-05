@@ -12,6 +12,7 @@ import {
   MIN_GRID_SIZE,
 } from '../common/constants';
 import type {
+  Spectrum,
   SpectrumComputation,
   SpectrumInterval,
 } from '../common/types/spectra.types';
@@ -53,7 +54,12 @@ export class CalcService {
       throw new BadRequestException('Некорректный интервал: "От" должно быть меньше "До"');
     }
 
-    const spectra = extractSpectraFromZip(buffer);
+    let spectra: Spectrum[];
+    try {
+      spectra = extractSpectraFromZip(buffer);
+    } catch (err) {
+      throw new BadRequestException((err as Error).message);
+    }
     const gridSize = Math.floor(Math.sqrt(spectra.length));
     if (gridSize < MIN_GRID_SIZE) {
       throw new BadRequestException(

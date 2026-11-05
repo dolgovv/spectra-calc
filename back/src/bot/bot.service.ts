@@ -194,7 +194,7 @@ function botCaption(computation: SpectrumComputation): string {
  * and "590-625 см⁻¹" all yield { from: 590, to: 625 }. The leading `-` is treated as a separator,
  * not a sign, so the common "590-625" form parses correctly.
  */
-function parseInterval(caption?: string): SpectrumInterval | null {
+export function parseInterval(caption?: string): SpectrumInterval | null {
   if (!caption) return null;
   const nums = caption.match(/\d+(?:\.\d+)?/g);
   if (!nums || nums.length < 2) return null;
