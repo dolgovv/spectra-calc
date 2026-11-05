@@ -8,7 +8,7 @@ SSH_PORT="22"
 # ────────────────────────────────────────────────────────────
 
 WEB_ROOT="/var/www/spectra-calc.ru"    # root из nginx.conf - сюда статика фронта
-APP_DIR="/srv/spectra-calc"             # рабочая папка бэка: Dockerfile, dist, assets, .env, volumes
+APP_DIR="/opt/spectra-calc"             # рабочая папка бэка: Dockerfile, dist, assets, .env, volumes
 IMAGE="spectra-calc-back"
 CONTAINER="spectra-calc-back"
 

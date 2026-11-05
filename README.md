@@ -52,5 +52,5 @@ cd front && npm ci && npm test    # Vitest: логика и пользовате
 | variable | `SSH_USER`        | пользователь с доступом к Docker и каталогам деплоя            |
 | variable | `SSH_PORT`        | порт SSH, необязательно (по умолчанию `22`)                    |
 
-`.env` на сервере (`/srv/spectra-calc/.env`) workflow не трогает - он должен там уже лежать.
+`.env` на сервере (`/opt/spectra-calc/.env`) workflow не трогает - он должен там уже лежать.
 Ручной `deploy.sh` работает как раньше и управляет тем же контейнером.
