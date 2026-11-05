@@ -1,4 +1,5 @@
 FROM node:22-slim
+LABEL app=spectra-calc
 WORKDIR /app
 
 COPY package*.json ./

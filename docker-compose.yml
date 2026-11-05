@@ -1,0 +1,40 @@
+name: spectra-calc
+
+services:
+  web:
+    image: spectra-calc-web:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:80"
+    depends_on:
+      back:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  back:
+    image: spectra-calc-back:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    env_file: back.env
+    environment:
+      # Fixed rather than configurable: web's nginx proxies to this port, the volume is at this path.
+      PORT: "3000"
+      STORAGE_ROOT: /app/storage
+    volumes:
+      - storage:/app/storage
+    healthcheck:
+      # A POST with no archive answers 400: the API is up, and no calculation had to run.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/calculate', { method: 'POST' }).then((r) => process.exit(r.status === 400 ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  storage:

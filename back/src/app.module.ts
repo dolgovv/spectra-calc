@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { loadConfig } from './config/configuration';
 import { SpectraModule } from './spectra/spectra.module';
-import { BotModule } from './bot/bot.module';
 
 @Module({
   imports: [
@@ -15,7 +14,6 @@ import { BotModule } from './bot/bot.module';
       serveStaticOptions: { index: false, fallthrough: true },
     }),
     SpectraModule,
-    BotModule,
   ],
 })
 export class AppModule {}

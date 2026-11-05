@@ -2,14 +2,14 @@
 
 Обрабатывает карты КР-спектров: принимает ZIP со 100 спектрами и интервал, считает «полезную»
 интенсивность каждого спектра, строит матрицу 10×10, статистику (μ, σ, Sr) и вердикт равномерности,
-генерирует тепловую карту (PNG), PDF-отчёт, CSV и JSON. Единая точка входа для веб-клиента и
-Telegram-бота. Всё на чистом TypeScript - без Python-сервиса.
+генерирует тепловую карту (PNG), PDF-отчёт, CSV и JSON для веб-клиента. Всё на чистом TypeScript -
+без Python-сервиса.
 
 ## Запуск
 
 ```bash
 npm install
-cp .env.example .env      # заполнить BOT_TOKEN / BOT_PROXY_URL при необходимости
+cp .env.example .env
 npm run build && npm start   # прод: node dist/main.js
 # или для разработки:
 npm run start:dev            # tsx watch
@@ -26,10 +26,6 @@ npm run start:dev            # tsx watch
 | `CORS_ORIGIN`     | разрешённые origin фронта (через запятую)           | `http://localhost:5173` |
 | `STORAGE_ROOT`    | локальное хранилище результатов                     | `./storage`             |
 | `QUEUE_MAX`       | лимит одновременных задач (свыше - 429)             | `25`                    |
-| `BOT_TOKEN`       | токен Telegram-бота (пусто = бот выключен)          | -                       |
-| `BOT_PROXY_URL`   | HTTP-прокси для трафика Telegram (Basic-auth в URL) | -                       |
-
-`.env` в `.gitignore` - токен и прокси не попадают в репозиторий.
 
 ## HTTP API
 
@@ -42,16 +38,10 @@ npm run start:dev            # tsx watch
 `xTicks`/`yTicks`, `colorScaleMin/Max`, `peakLabel`, `stats` (`meanIntensity`, `stdDeviation`,
 `sr`, `relStdDeviationPercent`, `category`, `categoryLabel`, …), `sourceFileName`, `computedAt`,
 `files` (`heatmapPng`, `reportPdf`, `matrixCsv`, `metaJson`). Тот же JSON сохраняется как
-`result.json` и парсится независимо ботом/сайтом.
+`result.json`.
 
 Ошибки: `400` - некорректный вход (не 100 файлов, пустой спектр, нет точек в интервале);
 `429` - очередь переполнена.
-
-## Telegram-бот
-
-Отправьте боту `.zip`-документ с подписью интервала (`590-625` или `/calc 590 625`) - вернёт
-тепловую карту (PNG), PDF-отчёт и текстовую сводку. Использует ту же расчётную цепочку, что и HTTP.
-Трафик Telegram идёт через `BOT_PROXY_URL` (в этом окружении Node не достаёт api.telegram.org напрямую).
 
 ## Архитектура (`src/`)
 
@@ -62,7 +52,6 @@ npm run start:dev            # tsx watch
 - `storage/` - абстракция хранилища (`StorageService`); сейчас `LocalStorageService`, позже - S3.
 - `queue/` - in-memory ограничитель одновременных задач (лимит `QUEUE_MAX`).
 - `spectra/` - HTTP-слой: контроллер `POST /api/calculate` + оркестратор (`calc → render → storage`).
-- `bot/` - Telegram-бот (grammy) + настройка прокси.
 - `common/` - общие типы и константы (пороги Sr, размер сетки).
 
 ## Формула

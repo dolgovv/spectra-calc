@@ -22,12 +22,8 @@ describe('POST /api/calculate', () => {
     root = mkdtempSync(join(tmpdir(), 'spectra-e2e-'));
     Object.assign(process.env, {
       STORAGE_ROOT: join(root, 'storage'),
-      LOGS_ROOT: join(root, 'logs'),
       PUBLIC_BASE_URL: BASE_URL,
       STORAGE_TTL_HOURS: '0',
-      // Set even when empty: otherwise a developer's back/.env would start the real bot.
-      BOT_TOKEN: '',
-      BOT_PROXY_URL: '',
     });
     // AppModule reads the config while it is being imported, hence the late import. NestFactory
     // rather than @nestjs/testing: under the testing module ServeStaticModule sees no HTTP adapter

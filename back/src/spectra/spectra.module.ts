@@ -10,6 +10,5 @@ import { QueueModule } from '../queue/queue.module';
   imports: [CalcModule, RenderModule, StorageModule, QueueModule],
   controllers: [SpectraController],
   providers: [SpectraService],
-  exports: [SpectraService],
 })
 export class SpectraModule {}

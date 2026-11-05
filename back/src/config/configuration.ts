@@ -9,10 +9,7 @@ export interface AppConfig {
   storageTtlMs: number;
   /** How often the sweeper looks for expired jobs, in ms. */
   storageSweepIntervalMs: number;
-  logsRoot: string;
   queueMax: number;
-  botToken: string | null;
-  botProxyUrl: string | null;
 }
 
 const HOUR_MS = 3_600_000;
@@ -61,9 +58,6 @@ export function loadConfig(): AppConfig {
       60,
       MINUTE_MS,
     ),
-    logsRoot: resolve(process.cwd(), process.env.LOGS_ROOT ?? './logs'),
     queueMax: positiveCount(process.env.QUEUE_MAX, 25),
-    botToken: process.env.BOT_TOKEN?.trim() ? process.env.BOT_TOKEN.trim() : null,
-    botProxyUrl: process.env.BOT_PROXY_URL?.trim() ? process.env.BOT_PROXY_URL.trim() : null,
   };
 }

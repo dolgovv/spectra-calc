@@ -8,10 +8,7 @@ const NAMES = [
   'STORAGE_ROOT',
   'STORAGE_TTL_HOURS',
   'STORAGE_SWEEP_INTERVAL_MINUTES',
-  'LOGS_ROOT',
   'QUEUE_MAX',
-  'BOT_TOKEN',
-  'BOT_PROXY_URL',
 ];
 
 describe('loadConfig', () => {
@@ -33,10 +30,7 @@ describe('loadConfig', () => {
       storageRoot: resolve(process.cwd(), 'storage'),
       storageTtlMs: 48 * 3_600_000,
       storageSweepIntervalMs: 60 * 60_000,
-      logsRoot: resolve(process.cwd(), 'logs'),
       queueMax: 25,
-      botToken: null,
-      botProxyUrl: null,
     });
   });
 
@@ -83,19 +77,5 @@ describe('loadConfig', () => {
     process.env.STORAGE_TTL_HOURS = raw;
 
     expect(loadConfig().storageTtlMs).toBe(48 * 3_600_000);
-  });
-
-  it('treats blank bot settings as absent', () => {
-    process.env.BOT_TOKEN = '   ';
-    process.env.BOT_PROXY_URL = '';
-
-    expect(loadConfig().botToken).toBeNull();
-    expect(loadConfig().botProxyUrl).toBeNull();
-  });
-
-  it('trims the bot token', () => {
-    process.env.BOT_TOKEN = ' 123:abc ';
-
-    expect(loadConfig().botToken).toBe('123:abc');
   });
 });
