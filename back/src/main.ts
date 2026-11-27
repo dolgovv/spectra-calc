@@ -9,7 +9,8 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bodyParser: true });
   const config = app.get(ConfigService<AppConfig, true>);
 
-  app.enableCors({ origin: config.get('corsOrigins', { infer: true }) });
+  // credentials: the admin's session cookie, for a dev front on another port.
+  app.enableCors({ origin: config.get('corsOrigins', { infer: true }), credentials: true });
   app.useGlobalPipes(
     new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false }),
   );

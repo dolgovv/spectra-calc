@@ -2,14 +2,14 @@
 
 Обрабатывает карты КР-спектров: принимает ZIP со 100 спектрами и интервал, считает «полезную»
 интенсивность каждого спектра, строит матрицу 10×10, статистику (μ, σ, Sr) и вердикт равномерности,
-генерирует тепловую карту (PNG), PDF-отчёт, CSV и JSON. Единая точка входа для веб-клиента и
-Telegram-бота. Всё на чистом TypeScript - без Python-сервиса.
+генерирует тепловую карту (PNG), PDF-отчёт, CSV и JSON для веб-клиента. Всё на чистом TypeScript -
+без Python-сервиса.
 
 ## Запуск
 
 ```bash
 npm install
-cp .env.example .env      # заполнить BOT_TOKEN / BOT_PROXY_URL при необходимости
+cp .env.example .env
 npm run build && npm start   # прод: node dist/main.js
 # или для разработки:
 npm run start:dev            # tsx watch
@@ -26,10 +26,10 @@ npm run start:dev            # tsx watch
 | `CORS_ORIGIN`     | разрешённые origin фронта (через запятую)           | `http://localhost:5173` |
 | `STORAGE_ROOT`    | локальное хранилище результатов                     | `./storage`             |
 | `QUEUE_MAX`       | лимит одновременных задач (свыше - 429)             | `25`                    |
-| `BOT_TOKEN`       | токен Telegram-бота (пусто = бот выключен)          | -                       |
-| `BOT_PROXY_URL`   | HTTP-прокси для трафика Telegram (Basic-auth в URL) | -                       |
-
-`.env` в `.gitignore` - токен и прокси не попадают в репозиторий.
+| `DATA_ROOT`       | приватные данные: база админки и исходные архивы    | `./data`                |
+| `ADMIN_PASSWORD`  | пароль `/admin`; пусто - админка выключена          | -                       |
+| `ARCHIVE_TTL_DAYS`| срок хранения исходных архивов, дней (0 - всегда)   | `30`                    |
+| `LOG_RETENTION_DAYS` | срок хранения логов и посещений, дней (0 - всегда) | `90`                 |
 
 ## HTTP API
 
@@ -42,16 +42,35 @@ npm run start:dev            # tsx watch
 `xTicks`/`yTicks`, `colorScaleMin/Max`, `peakLabel`, `stats` (`meanIntensity`, `stdDeviation`,
 `sr`, `relStdDeviationPercent`, `category`, `categoryLabel`, …), `sourceFileName`, `computedAt`,
 `files` (`heatmapPng`, `reportPdf`, `matrixCsv`, `metaJson`). Тот же JSON сохраняется как
-`result.json` и парсится независимо ботом/сайтом.
+`result.json`.
 
 Ошибки: `400` - некорректный вход (не 100 файлов, пустой спектр, нет точек в интервале);
 `429` - очередь переполнена.
 
-## Telegram-бот
+Каждая попытка расчёта с архивом записывается: параметры, IP, браузер, итог (результат или текст
+ошибки), а сам архив сохраняется в `DATA_ROOT/archives/<id>.zip`.
 
-Отправьте боту `.zip`-документ с подписью интервала (`590-625` или `/calc 590 625`) - вернёт
-тепловую карту (PNG), PDF-отчёт и текстовую сводку. Использует ту же расчётную цепочку, что и HTTP.
-Трафик Telegram идёт через `BOT_PROXY_URL` (в этом окружении Node не достаёт api.telegram.org напрямую).
+`GET /api/health` - для healthcheck контейнера, в лог запросов не пишется.
+
+`POST /api/track` - просмотр страницы от SPA (`path`, `referrer`, urlencoded), всегда `204`.
+
+### Админка (`/api/admin`)
+
+Вход: `POST /api/admin/login` `{ "password": "…" }` → HttpOnly-cookie `spectra_admin` на 7 дней
+(подписана ключом из пароля: смена пароля разлогинивает). 10 неверных попыток с одного IP - 429 на
+15 минут. Без `ADMIN_PASSWORD` все эндпоинты отвечают 404.
+
+| Метод и путь                                   | Что отдаёт                                          |
+| ---------------------------------------------- | --------------------------------------------------- |
+| `GET  /session`                                | `200`, если сессия жива, иначе `401`                |
+| `POST /logout`                                 | сбрасывает cookie                                   |
+| `GET  /overview?days=30&tz=180`                | посещения и расчёты по дням в поясе админа, топы    |
+| `GET  /requests?limit&offset&status&search&admin` | лог запросов; `admin=1` - вместе с запросами админки |
+| `GET  /requests/summary?days&tz&admin`         | сводка по эндпоинтам                                |
+| `GET  /calculations?limit&offset&status`       | журнал расчётов                                     |
+| `GET  /calculations/:id`                       | запись + полный результат                           |
+| `GET  /calculations/:id/archive`               | исходный ZIP под исходным именем                    |
+| `GET  /calculations/:id/files/:name`           | `heatmap.png`, `report.pdf`, `matrix.csv`, `result.json`, собранные из результата |
 
 ## Архитектура (`src/`)
 
@@ -62,7 +81,9 @@ npm run start:dev            # tsx watch
 - `storage/` - абстракция хранилища (`StorageService`); сейчас `LocalStorageService`, позже - S3.
 - `queue/` - in-memory ограничитель одновременных задач (лимит `QUEUE_MAX`).
 - `spectra/` - HTTP-слой: контроллер `POST /api/calculate` + оркестратор (`calc → render → storage`).
-- `bot/` - Telegram-бот (grammy) + настройка прокси.
+- `analytics/` - SQLite (`node:sqlite`) в `DATA_ROOT`: лог запросов (middleware), посещения,
+  журнал расчётов с архивами, очистка по срокам хранения.
+- `admin/` - вход, guard и API админки.
 - `common/` - общие типы и константы (пороги Sr, размер сетки).
 
 ## Формула

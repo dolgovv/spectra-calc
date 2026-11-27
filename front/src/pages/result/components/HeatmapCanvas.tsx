@@ -12,9 +12,9 @@ const RESOLUTION = 600;
 /**
  * Paints the intensity matrix client-side in the app's colour ramp.
  *
- * The grid is only 10×10, so it is drawn at native size onto an offscreen canvas and then scaled
- * up with image smoothing on — the browser's bilinear filter does the interpolation, which is what
- * gives the smooth field instead of 100 hard squares.
+ * The grid is small (gridSize×gridSize), so it is drawn at native size onto an offscreen canvas
+ * and then scaled up with image smoothing on — the browser's bilinear filter does the
+ * interpolation, which is what gives the smooth field instead of hard squares.
  */
 export default function HeatmapCanvas({ matrix, scale }: HeatmapCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,15 +57,18 @@ export default function HeatmapCanvas({ matrix, scale }: HeatmapCanvasProps) {
 
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
-    for (let i = 1; i < 10; i++) {
-      const p = (i / 10) * RESOLUTION;
+    for (let i = 1; i < cols; i++) {
+      const x = (i / cols) * RESOLUTION;
       ctx.beginPath();
-      ctx.moveTo(p, 0);
-      ctx.lineTo(p, RESOLUTION);
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, RESOLUTION);
       ctx.stroke();
+    }
+    for (let i = 1; i < rows; i++) {
+      const y = (i / rows) * RESOLUTION;
       ctx.beginPath();
-      ctx.moveTo(0, p);
-      ctx.lineTo(RESOLUTION, p);
+      ctx.moveTo(0, y);
+      ctx.lineTo(RESOLUTION, y);
       ctx.stroke();
     }
   }, [matrix, scale]);

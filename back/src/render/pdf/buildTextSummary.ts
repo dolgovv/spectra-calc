@@ -2,7 +2,7 @@ import type { SpectrumComputation } from '../../common/types/spectra.types';
 
 const nf = new Intl.NumberFormat('ru-RU');
 
-/** Plaintext summary (Sr, category, mean, …) shared by the PDF, the bot reply and the API. */
+/** Plaintext summary (Sr, category, mean, …) of a computation. */
 export function buildTextSummary(c: SpectrumComputation): string {
   const s = c.stats;
   return [

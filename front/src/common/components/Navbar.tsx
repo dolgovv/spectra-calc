@@ -45,7 +45,7 @@ export default function Navbar({ width }: NavbarProps) {
         <div className="flex items-center gap-5">
           <TicksRule />
           <a
-            href="https://github.com/dolgovv"
+            href="https://dolgovv.ru"
             target="_blank"
             rel="noopener"
             className="rounded-full border border-border bg-surface px-3 py-1.5 text-[11px] text-muted transition hover:text-foreground"

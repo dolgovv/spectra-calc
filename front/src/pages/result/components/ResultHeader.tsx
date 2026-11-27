@@ -5,9 +5,18 @@ import Button from '../../../common/components/Button';
 import { ROUTES } from '../../../router/routes';
 import type { SpectrumResult } from '../../../types/spectra';
 
+export interface BackLink {
+  to: string;
+  label: string;
+}
+
 export interface ResultHeaderProps {
   result: SpectrumResult;
+  /** Where "back" leads; the form by default, the calculation list in the admin. */
+  back?: BackLink;
 }
+
+const BACK_HOME: BackLink = { to: ROUTES.home, label: 'Назад' };
 
 function FileTab({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
   return (
@@ -22,16 +31,16 @@ function FileTab({ href, icon, label }: { href: string; icon: ReactNode; label: 
   );
 }
 
-export default function ResultHeader({ result }: ResultHeaderProps) {
+export default function ResultHeader({ result, back = BACK_HOME }: ResultHeaderProps) {
   const { files } = result;
   return (
     <>
       <Link
-        to={ROUTES.home}
+        to={back.to}
         className="mb-[22px] inline-flex items-center gap-1.5 font-mono text-[12.5px] text-muted transition hover:text-accent"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Назад
+        {back.label}
       </Link>
 
       <div className="mb-7 flex flex-wrap items-start justify-between gap-[18px]">

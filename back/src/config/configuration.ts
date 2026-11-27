@@ -9,12 +9,21 @@ export interface AppConfig {
   storageTtlMs: number;
   /** How often the sweeper looks for expired jobs, in ms. */
   storageSweepIntervalMs: number;
-  logsRoot: string;
   queueMax: number;
-  botToken: string | null;
-  botProxyUrl: string | null;
+  /**
+   * Private data: the admin database and the uploaded archives. Must not be under storageRoot,
+   * which is served publicly under /files.
+   */
+  dataRoot: string;
+  /** Unset or empty disables the admin panel entirely. */
+  adminPassword: string | undefined;
+  /** Age at which uploaded archives are deleted, in ms. 0 keeps them forever. */
+  archiveTtlMs: number;
+  /** Age at which request logs and page views are deleted, in ms. 0 keeps them forever. */
+  logRetentionMs: number;
 }
 
+const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 const MINUTE_MS = 60_000;
 
@@ -61,9 +70,10 @@ export function loadConfig(): AppConfig {
       60,
       MINUTE_MS,
     ),
-    logsRoot: resolve(process.cwd(), process.env.LOGS_ROOT ?? './logs'),
     queueMax: positiveCount(process.env.QUEUE_MAX, 25),
-    botToken: process.env.BOT_TOKEN?.trim() ? process.env.BOT_TOKEN.trim() : null,
-    botProxyUrl: process.env.BOT_PROXY_URL?.trim() ? process.env.BOT_PROXY_URL.trim() : null,
+    dataRoot: resolve(process.cwd(), process.env.DATA_ROOT ?? './data'),
+    adminPassword: process.env.ADMIN_PASSWORD || undefined,
+    archiveTtlMs: positiveDuration(process.env.ARCHIVE_TTL_DAYS, 30, DAY_MS),
+    logRetentionMs: positiveDuration(process.env.LOG_RETENTION_DAYS, 90, DAY_MS),
   };
 }

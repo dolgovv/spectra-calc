@@ -18,7 +18,7 @@ const CATEGORY_COLORS: Record<CategoryKey, string> = {
 };
 
 /**
- * Renders the A4 PDF report: heatmap image, statistics with verdict, and the 10×10
+ * Renders the A4 PDF report: heatmap image, statistics with verdict, and the square
  * intensity table. Returns the PDF as a Buffer.
  */
 export function renderReportPdf(
@@ -51,6 +51,19 @@ export function renderReportPdf(
     );
     doc.moveDown(0.8);
 
+    if (computation.spectraDropped > 0) {
+      const used = computation.gridSize * computation.gridSize;
+      doc.font('bold').fontSize(9.5).fillColor('#e8a13a');
+      doc.text(
+        `⚠ Показаны первые ${used} из ${computation.spectraFound} найденных спектров — ${computation.spectraDropped} отброшено (сетка ${computation.gridSize}×${computation.gridSize}).`,
+        left,
+        doc.y,
+        { width: pageWidth },
+      );
+      doc.fillColor('#111111');
+      doc.moveDown(0.6);
+    }
+
     // Heatmap image, centered
     const imgWidth = Math.min(360, pageWidth);
     const imgX = left + (pageWidth - imgWidth) / 2;
@@ -79,7 +92,11 @@ export function renderReportPdf(
 
     // Matrix table on a fresh page
     doc.addPage();
-    doc.font('bold').fontSize(13).fillColor('#111111').text('Матрица полезной интенсивности (10 × 10)');
+    doc
+      .font('bold')
+      .fontSize(13)
+      .fillColor('#111111')
+      .text(`Матрица полезной интенсивности (${computation.gridSize} × ${computation.gridSize})`);
     doc.moveDown(0.5);
     drawMatrixTable(doc, computation, left, pageWidth);
 
