@@ -85,6 +85,10 @@ jobs:
           url=http://localhost:8082
           curl -fsS -o /dev/null "$url/"
           curl -fsS -o /dev/null "$url/example"
+          curl -fsS -o /dev/null "$url/admin"
+          curl -fsS "$url/api/health"
+          # back.env is empty here, so the admin is off: 404, not 401 or 500.
+          [ "$(curl -s -o /dev/null -w '%{http_code}' "$url/api/admin/session")" = 404 ]
           curl -fsS -o /dev/null "$url/example/result.json"
           [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$url/api/calculate")" = 400 ]
           cp test_files/input/substrate3*.zip map.zip # curl -F cannot take the comma in the real name

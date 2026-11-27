@@ -9,6 +9,10 @@ const NAMES = [
   'STORAGE_TTL_HOURS',
   'STORAGE_SWEEP_INTERVAL_MINUTES',
   'QUEUE_MAX',
+  'DATA_ROOT',
+  'ADMIN_PASSWORD',
+  'ARCHIVE_TTL_DAYS',
+  'LOG_RETENTION_DAYS',
 ];
 
 describe('loadConfig', () => {
@@ -31,7 +35,23 @@ describe('loadConfig', () => {
       storageTtlMs: 48 * 3_600_000,
       storageSweepIntervalMs: 60 * 60_000,
       queueMax: 25,
+      dataRoot: resolve(process.cwd(), 'data'),
+      adminPassword: undefined,
+      archiveTtlMs: 30 * 86_400_000,
+      logRetentionMs: 90 * 86_400_000,
     });
+  });
+
+  it('treats an empty ADMIN_PASSWORD as no admin at all', () => {
+    process.env.ADMIN_PASSWORD = '';
+
+    expect(loadConfig().adminPassword).toBeUndefined();
+  });
+
+  it('lets ARCHIVE_TTL_DAYS=0 keep the archives forever', () => {
+    process.env.ARCHIVE_TTL_DAYS = '0';
+
+    expect(loadConfig().archiveTtlMs).toBe(0);
   });
 
   it('derives the public URL from the port', () => {

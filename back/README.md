@@ -26,6 +26,10 @@ npm run start:dev            # tsx watch
 | `CORS_ORIGIN`     | разрешённые origin фронта (через запятую)           | `http://localhost:5173` |
 | `STORAGE_ROOT`    | локальное хранилище результатов                     | `./storage`             |
 | `QUEUE_MAX`       | лимит одновременных задач (свыше - 429)             | `25`                    |
+| `DATA_ROOT`       | приватные данные: база админки и исходные архивы    | `./data`                |
+| `ADMIN_PASSWORD`  | пароль `/admin`; пусто - админка выключена          | -                       |
+| `ARCHIVE_TTL_DAYS`| срок хранения исходных архивов, дней (0 - всегда)   | `30`                    |
+| `LOG_RETENTION_DAYS` | срок хранения логов и посещений, дней (0 - всегда) | `90`                 |
 
 ## HTTP API
 
@@ -43,6 +47,31 @@ npm run start:dev            # tsx watch
 Ошибки: `400` - некорректный вход (не 100 файлов, пустой спектр, нет точек в интервале);
 `429` - очередь переполнена.
 
+Каждая попытка расчёта с архивом записывается: параметры, IP, браузер, итог (результат или текст
+ошибки), а сам архив сохраняется в `DATA_ROOT/archives/<id>.zip`.
+
+`GET /api/health` - для healthcheck контейнера, в лог запросов не пишется.
+
+`POST /api/track` - просмотр страницы от SPA (`path`, `referrer`, urlencoded), всегда `204`.
+
+### Админка (`/api/admin`)
+
+Вход: `POST /api/admin/login` `{ "password": "…" }` → HttpOnly-cookie `spectra_admin` на 7 дней
+(подписана ключом из пароля: смена пароля разлогинивает). 10 неверных попыток с одного IP - 429 на
+15 минут. Без `ADMIN_PASSWORD` все эндпоинты отвечают 404.
+
+| Метод и путь                                   | Что отдаёт                                          |
+| ---------------------------------------------- | --------------------------------------------------- |
+| `GET  /session`                                | `200`, если сессия жива, иначе `401`                |
+| `POST /logout`                                 | сбрасывает cookie                                   |
+| `GET  /overview?days=30&tz=180`                | посещения и расчёты по дням в поясе админа, топы    |
+| `GET  /requests?limit&offset&status&search&admin` | лог запросов; `admin=1` - вместе с запросами админки |
+| `GET  /requests/summary?days&tz&admin`         | сводка по эндпоинтам                                |
+| `GET  /calculations?limit&offset&status`       | журнал расчётов                                     |
+| `GET  /calculations/:id`                       | запись + полный результат                           |
+| `GET  /calculations/:id/archive`               | исходный ZIP под исходным именем                    |
+| `GET  /calculations/:id/files/:name`           | `heatmap.png`, `report.pdf`, `matrix.csv`, `result.json`, собранные из результата |
+
 ## Архитектура (`src/`)
 
 - `calc/` - расчётное ядро (парсинг ZIP/спектров, полезная интенсивность, матрица, статистика,
@@ -52,6 +81,9 @@ npm run start:dev            # tsx watch
 - `storage/` - абстракция хранилища (`StorageService`); сейчас `LocalStorageService`, позже - S3.
 - `queue/` - in-memory ограничитель одновременных задач (лимит `QUEUE_MAX`).
 - `spectra/` - HTTP-слой: контроллер `POST /api/calculate` + оркестратор (`calc → render → storage`).
+- `analytics/` - SQLite (`node:sqlite`) в `DATA_ROOT`: лог запросов (middleware), посещения,
+  журнал расчётов с архивами, очистка по срокам хранения.
+- `admin/` - вход, guard и API админки.
 - `common/` - общие типы и константы (пороги Sr, размер сетки).
 
 ## Формула

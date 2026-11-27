@@ -14,6 +14,8 @@ const FILE_NAMES = {
 } as const;
 
 export interface CalculateParams extends ComputeDisplayOptions {
+  /** Given by the caller when the id has to be known up front (the calculation log uses it). */
+  id?: string;
   buffer: Buffer;
   interval: SpectrumInterval;
   sourceFileName: string;
@@ -34,6 +36,7 @@ export class SpectraService {
    * the artifacts are actually on disk.
    */
   async calculate({
+    id = randomUUID(),
     buffer,
     interval,
     sourceFileName,
@@ -42,7 +45,6 @@ export class SpectraService {
     return this.queue.run(async () => {
       const computation = this.calc.compute(buffer, interval, sourceFileName, displayOptions);
       const artifacts = await this.render.render(computation);
-      const id = randomUUID();
 
       const files = {
         heatmapPng: this.storage.publicUrl(id, FILE_NAMES.heatmapPng),

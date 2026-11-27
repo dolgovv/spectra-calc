@@ -22,6 +22,7 @@ describe('POST /api/calculate', () => {
     root = mkdtempSync(join(tmpdir(), 'spectra-e2e-'));
     Object.assign(process.env, {
       STORAGE_ROOT: join(root, 'storage'),
+      DATA_ROOT: join(root, 'data'),
       PUBLIC_BASE_URL: BASE_URL,
       STORAGE_TTL_HOURS: '0',
     });

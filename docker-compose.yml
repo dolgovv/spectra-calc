@@ -23,18 +23,23 @@ services:
       # Fixed rather than configurable: web's nginx proxies to this port, the volume is at this path.
       PORT: "3000"
       STORAGE_ROOT: /app/storage
+      # Admin database and uploaded archives: private, so a volume of its own rather than a
+      # subdirectory of storage, which is served publicly under /files.
+      DATA_ROOT: /app/data
     volumes:
       - storage:/app/storage
+      - data:/app/data
     healthcheck:
-      # A POST with no archive answers 400: the API is up, and no calculation had to run.
+      # A dedicated endpoint, left out of the request log the admin shows.
       test:
         - CMD
         - node
         - -e
-        - "fetch('http://127.0.0.1:3000/api/calculate', { method: 'POST' }).then((r) => process.exit(r.status === 400 ? 0 : 1), () => process.exit(1))"
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
       interval: 10s
       timeout: 3s
       retries: 3
 
 volumes:
   storage:
+  data:
